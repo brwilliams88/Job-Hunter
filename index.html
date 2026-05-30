@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Job Hunter</title>
+  <link rel="icon" type="image/png" href="appicon.png" />
+  <link rel="apple-touch-icon" href="appicon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Job Hunter" />
+  <meta name="theme-color" content="#0f1117" />
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <style>
     /* ── Reset & Base ── */
@@ -49,6 +54,7 @@
     }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-icon { font-size: 22px; }
+    .logo-img { width: 30px; height: 30px; border-radius: 7px; }
     .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
     .logo-text span { color: var(--accent); }
 
@@ -310,7 +316,7 @@
   <!-- ── HEADER ── -->
   <header class="app-header">
     <div class="logo">
-      <span class="logo-icon">🎯</span>
+      <img src="appicon.png" alt="Job Hunter" class="logo-img" />
       <span class="logo-text">Job <span>Hunter</span></span>
     </div>
     <div class="header-actions">
@@ -377,7 +383,7 @@
       <table>
         <thead>
           <tr>
-            <th @click="setSort('company')" :class="{active-sort: sortKey==='company'}">
+            <th @click="setSort('company')" :class="{'active-sort': sortKey==='company'}">
               Company <span class="sort-indicator">{{ sortArrow('company') }}</span>
             </th>
             <th @click="setSort('title')" :class="{'active-sort': sortKey==='title'}">
