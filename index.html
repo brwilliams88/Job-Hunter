@@ -221,7 +221,7 @@
 
     /* ── Detail Panel ── */
     .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 28px; }
-    .detail-panel { background: var(--surface); width: 100%; max-width: 720px; max-height: 86vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+    .detail-panel { background: var(--surface); width: 100%; max-width: 820px; max-height: 88vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
     .detail-header {
       padding: 18px 20px; border-bottom: 1px solid var(--border);
       display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
@@ -236,6 +236,13 @@
         radial-gradient(ellipse 46px 36px at 190px 150px,rgba(64,76,30,0.65),   transparent 68%);
       background-size: 260px 180px; background-repeat: repeat;
     }
+    .btn-view-posting {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+      background: var(--accent); color: #1a1206; font-weight: 700; font-size: 13px;
+      padding: 8px 16px; border-radius: var(--radius); text-decoration: none;
+      box-shadow: 0 2px 10px rgba(245,121,46,0.35);
+    }
+    .btn-view-posting:hover { background: var(--accent2); box-shadow: 0 3px 14px rgba(245,121,46,0.5); }
     .detail-company { font-size: 18px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
     .detail-title { color: #d7d2bf; font-size: 13px; margin-top: 3px; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
     .detail-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 22px; }
@@ -567,6 +574,7 @@
             <span v-if="selectedJob.referral" class="ref-pill">🤝 Referral</span>
             <span v-if="isFollowUpDue(selectedJob)" class="followup-flag">🔔 Follow up due</span>
           </div>
+          <a v-if="selectedJob.url" :href="selectedJob.url" target="_blank" class="btn-view-posting">↗ View Job Posting</a>
         </div>
         <button class="close-btn" @click="selectedJob = null">×</button>
       </div>
@@ -575,19 +583,16 @@
 
         <!-- Meta -->
         <div>
-          <div class="detail-section-title">Details</div>
           <div class="detail-meta-grid">
             <div class="meta-item"><label>Location</label><div class="meta-value">{{ selectedJob.location || '—' }}</div></div>
             <div class="meta-item"><label>Salary</label><div class="meta-value">{{ selectedJob.salary || '—' }}</div></div>
-            <div class="meta-item"><label>Applied</label><div class="meta-value">{{ formatDate(selectedJob.appliedDate) }}</div></div>
+            <div class="meta-item"><label>Applied</label><input type="date" v-model="selectedJob.appliedDate" @change="saveData" style="margin-top:2px" /></div>
             <div class="meta-item"><label>Last Updated</label><div class="meta-value">{{ formatDate(selectedJob.updatedDate) }}</div></div>
           </div>
-          <div style="margin-top:10px" v-if="selectedJob.url"><a :href="selectedJob.url" target="_blank" class="btn btn-ghost btn-sm">🔗 View Posting</a></div>
         </div>
 
         <!-- Status + Follow-up -->
         <div>
-          <div class="detail-section-title">Status & Follow-up</div>
           <div class="form-row">
             <div class="form-group">
               <label>Status</label>
@@ -771,6 +776,8 @@
           <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">Test Connection</button>
           <button class="btn btn-secondary btn-sm" @click="pullFromGithub" :disabled="!settings.githubToken">Pull Latest Data</button>
           <button class="btn btn-secondary btn-sm" @click="exportJson">⬇ Export Backup</button>
+          <button class="btn btn-secondary btn-sm" @click="triggerImport">⬆ Restore Backup</button>
+          <input ref="importInput" type="file" accept="application/json,.json" @change="importJson" style="display:none" />
         </div>
       </div>
       <div class="modal-footer"><button class="btn btn-ghost" @click="showSettings = false">Cancel</button><button class="btn btn-primary" @click="saveSettings">Save Settings</button></div>
@@ -786,7 +793,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v7';
+    const appVersion  = 'v8';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -1131,12 +1138,12 @@ Return ONLY valid JSON (no markdown, no commentary):
       if (!settings.openaiKey || !selectedJob.value) return;
       snapshotLoading.value = true;
       try {
-        const prompt = `Give a current company snapshot for "${selectedJob.value.company}" using up-to-date web information. Cover in concise bullets (no markdown headers):
-• Size (approx headcount)
-• Funding stage / market cap (if startup or public)
-• Industry / what they do
-• Culture & reputation — summarize what people say on Glassdoor and similar
-• Any recent news worth knowing
+        const prompt = `Give a current company snapshot for "${selectedJob.value.company}" using up-to-date web information. Use short markdown bullets, each starting with a **bold label**. Do NOT include an "as of [date]" line and do NOT add a closing disclaimer — just the bullets. Cover:
+- **Size:** approximate headcount
+- **Stage / market cap:** funding stage if a startup, or market cap if public
+- **Industry:** what they do
+- **Culture & employee sentiment:** the most detailed section (3–5 sentences). Pull from current and former employees across Glassdoor, Blind, Reddit and reviews — overall rating, what people genuinely like, the most common complaints/concerns, work-life balance, management quality, compensation, and any patterns in recent reviews.
+- **Recent news:** notable items worth knowing
 If unsure on a point, say so briefly.`;
         const res = await fetch('https://api.openai.com/v1/responses', {
           method:'POST',
@@ -1153,7 +1160,7 @@ If unsure on a point, say so briefly.`;
       snapshotLoading.value = false;
     }
 
-    // ── Export ──
+    // ── Export / Import ──
     function exportJson() {
       const blob = new Blob([JSON.stringify({ jobs: jobs.value, companies }, null, 2)], { type:'application/json' });
       const url = URL.createObjectURL(blob);
@@ -1161,6 +1168,29 @@ If unsure on a point, say so briefly.`;
       a.href = url; a.download = `job-hunter-backup-${today()}.json`; a.click();
       URL.revokeObjectURL(url);
       showToast('⬇ Backup downloaded');
+    }
+    const importInput = ref(null);
+    function triggerImport() { if (importInput.value) importInput.value.click(); }
+    function importJson(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const newJobs = Array.isArray(data) ? data : (data.jobs || []);
+          const newCompanies = (!Array.isArray(data) && data.companies) ? data.companies : {};
+          if (!confirm(`Restore ${newJobs.length} job(s) from this backup? This replaces what's currently in the app.`)) { e.target.value = ''; return; }
+          jobs.value = newJobs;
+          Object.keys(companies).forEach(k => delete companies[k]);
+          Object.assign(companies, newCompanies);
+          normalizeStatuses();
+          saveData();
+          showToast('⬆ Backup restored!');
+        } catch(err) { showToast('⚠️ Could not read that file: ' + err.message, 4500); }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
     }
 
     // ── GitHub Sync ──
@@ -1282,7 +1312,7 @@ If unsure on a point, say so briefly.`;
       openAddModal, saveJob, openDetail, toggleStar, deleteActivity, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, saveContact, deleteContact, saveCompanyData,
-      extractFromText, extractFromUrl, fetchSnapshot, exportJson,
+      extractFromText, extractFromUrl, fetchSnapshot, exportJson, importInput, triggerImport, importJson,
       pullFromGithub, pushToGithub, testGithub, saveData, saveSettings
     };
   }
