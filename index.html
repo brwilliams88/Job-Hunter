@@ -46,13 +46,15 @@
     /* Tiling camo texture behind the header (soft-edged blobs that repeat seamlessly) */
     .app-header {
       position: sticky; top: 0; z-index: 100;
-      background-color: var(--surface);
+      background-color: #232b15;
       background-image:
-        radial-gradient(ellipse 60px 44px at 34px 38px,  rgba(107,122,58,0.22), transparent 62%),
-        radial-gradient(ellipse 74px 52px at 150px 26px, rgba(56,66,28,0.34),  transparent 62%),
-        radial-gradient(ellipse 54px 40px at 108px 132px,rgba(92,104,46,0.16), transparent 62%),
-        radial-gradient(ellipse 66px 50px at 226px 112px,rgba(48,56,24,0.30),  transparent 62%),
-        radial-gradient(ellipse 50px 38px at 28px 150px, rgba(80,92,40,0.18),  transparent 62%);
+        radial-gradient(ellipse 64px 48px at 34px 38px,  rgba(120,138,60,0.55), transparent 68%),
+        radial-gradient(ellipse 80px 56px at 150px 24px, rgba(38,46,18,0.85),   transparent 68%),
+        radial-gradient(ellipse 58px 44px at 104px 134px,rgba(104,120,52,0.50), transparent 68%),
+        radial-gradient(ellipse 72px 54px at 232px 112px,rgba(30,38,14,0.85),   transparent 68%),
+        radial-gradient(ellipse 54px 42px at 24px 150px, rgba(92,108,46,0.48),  transparent 68%),
+        radial-gradient(ellipse 46px 36px at 190px 150px,rgba(64,76,30,0.70),   transparent 68%),
+        radial-gradient(ellipse 40px 32px at 120px 70px, rgba(140,156,72,0.30), transparent 70%);
       background-size: 260px 180px;
       background-repeat: repeat;
       border-bottom: 1px solid var(--border);
@@ -61,7 +63,7 @@
     }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-img { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
     .logo-text span { color: var(--accent); }
 
     .header-actions { display: flex; gap: 8px; align-items: center; }
@@ -122,12 +124,16 @@
     /* ── Toolbar ── */
     .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .search-wrap { position: relative; flex: 1; min-width: 200px; }
-    .search-wrap input {
-      width: 100%; padding: 8px 12px 8px 40px;
+    .search-wrap input[type="text"] {
+      width: 100%; padding: 8px 12px 8px 38px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); color: var(--text); font-size: 13px;
     }
-    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; opacity: 0.7; }
+    .search-icon {
+      position: absolute; left: 12px; top: 0; bottom: 0; display: flex; align-items: center;
+      color: var(--muted); pointer-events: none; opacity: 0.55;
+    }
+    .search-icon svg { width: 15px; height: 15px; }
     select { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; cursor: pointer; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
@@ -176,7 +182,7 @@
 
     /* ── Status Badge ── */
     .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-    .badge-watching   { background: rgba(143,144,111,0.2); color: var(--muted); }
+    .badge-interested { background: rgba(143,144,111,0.2); color: var(--muted); }
     .badge-applied    { background: rgba(245,121,46,0.18); color: var(--accent); }
     .badge-interviewing { background: rgba(214,177,58,0.2); color: var(--yellow); }
     .badge-offer      { background: rgba(176,138,79,0.25); color: var(--purple); }
@@ -201,7 +207,7 @@
     .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-    input[type="text"], input[type="url"], input[type="date"], textarea, select {
+    input[type="text"], input[type="url"], input[type="date"], input[type="password"], textarea, select {
       width: 100%; padding: 9px 12px; background: var(--surface2);
       border: 1px solid var(--border); border-radius: 8px; color: var(--text);
       font-size: 13px; font-family: inherit; min-width: 0;
@@ -213,8 +219,8 @@
     .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
     /* ── Detail Panel ── */
-    .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; justify-content: flex-end; z-index: 200; }
-    .detail-panel { background: var(--surface); width: 100%; max-width: 540px; height: 100%; overflow-y: auto; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+    .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 28px; }
+    .detail-panel { background: var(--surface); width: 100%; max-width: 720px; max-height: 86vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
     .detail-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: sticky; top: 0; background: var(--surface); z-index: 10; }
     .detail-company { font-size: 18px; font-weight: 700; }
     .detail-title { color: var(--muted); font-size: 13px; margin-top: 3px; }
@@ -240,22 +246,38 @@
     .collapse-toggle:hover { color: var(--accent); }
     .collapse-chevron { transition: transform 0.15s; display: inline-block; }
     .collapse-chevron.open { transform: rotate(90deg); }
-    .collapsible-body { overflow: hidden; }
-    .collapsible-body.clamped { max-height: 220px; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+    .company-snapshot.clamped { max-height: 220px; overflow: hidden; cursor: pointer; -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
 
     /* Activity timeline */
     .timeline { position: relative; padding-left: 18px; }
     .timeline::before { content: ''; position: absolute; left: 4px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
     .timeline-item { position: relative; padding: 4px 0 10px; font-size: 12px; }
     .timeline-item::before { content: ''; position: absolute; left: -17px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); }
-    .timeline-text { color: var(--text); }
+    .timeline-text { color: var(--text); padding-right: 20px; }
     .timeline-date { color: var(--muted); font-size: 11px; }
+    .timeline-del { position: absolute; right: 0; top: 4px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; opacity: 0; transition: opacity 0.1s; padding: 2px 4px; }
+    .timeline-item:hover .timeline-del { opacity: 1; }
+    .timeline-del:hover { color: var(--red); }
+    /* Referral chip */
+    .chip-referral { font-size: 11px; padding: 3px 10px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); background: transparent; user-select: none; white-space: nowrap; }
+    .chip-referral:hover { border-color: var(--muted); color: var(--text); }
+    .chip-referral.on { background: rgba(127,174,58,0.22); color: var(--green); border-color: transparent; }
+    .ref-mini { font-size: 10px; color: var(--green); background: rgba(127,174,58,0.18); padding: 1px 7px; border-radius: 10px; margin-top: 4px; display: inline-block; }
+    /* Open-posting link in table row */
+    .row-link { color: var(--muted); display: inline-flex; align-items: center; opacity: 0.6; }
+    .row-link:hover { color: var(--accent); opacity: 1; }
+    .row-link svg { width: 14px; height: 14px; }
 
     /* Masked key field with reveal toggle */
     .key-field { position: relative; }
-    .key-field input { padding-right: 38px; }
-    .key-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px; }
-    .key-eye:hover { color: var(--text); }
+    .key-field input { padding-right: 60px; }
+    .key-eye {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+      cursor: pointer; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 4px 8px; border-radius: 6px;
+    }
+    .key-eye:hover { color: var(--text); border-color: var(--muted); }
 
     .interview-entry, .contact-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
     .interview-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -279,7 +301,8 @@
     @media (max-width: 640px) {
       .main { padding: 12px; }
       .form-row { grid-template-columns: 1fr; }
-      .detail-panel { max-width: 100%; }
+      .detail-overlay { padding: 0; align-items: stretch; justify-content: stretch; }
+      .detail-panel { max-width: 100%; max-height: 100%; height: 100%; border-radius: 0; border: none; }
       .hide-mobile { display: none; }
       .stats-grid { grid-template-columns: repeat(3, 1fr); }
     }
@@ -369,7 +392,9 @@
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="search-wrap">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        </span>
         <input type="text" v-model="searchQuery" placeholder="Search company, title, location…" />
       </div>
       <select v-model="filterStatus">
@@ -383,7 +408,6 @@
         <option>In-Office</option>
       </select>
       <button class="btn btn-sm" :class="filterStarred ? 'btn-primary' : 'btn-ghost'" @click="filterStarred = !filterStarred">★ Starred</button>
-      <button class="btn btn-ghost btn-sm" @click="exportJson">⬇ Export</button>
     </div>
 
     <!-- Table -->
@@ -417,11 +441,19 @@
                 <span class="star-toggle" :class="{ starred: job.starred }" @click.stop="toggleStar(job)">{{ job.starred ? '★' : '☆' }}</span>
                 <div>
                   <div class="company-name">{{ job.company }}</div>
+                  <div v-if="job.referral" class="ref-mini">🤝 Referral</div>
                   <div v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</div>
                 </div>
               </div>
             </td>
-            <td><div>{{ job.title }}</div></td>
+            <td>
+              <div style="display:flex; align-items:center; gap:7px">
+                <span>{{ job.title }}</span>
+                <a v-if="job.url" :href="job.url" target="_blank" class="row-link" @click.stop title="Open job posting">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
+            </td>
             <td class="hide-mobile location-text">{{ job.location }}</td>
             <td class="hide-mobile"><span class="tag-work-type" v-if="job.workType">{{ job.workType }}</span></td>
             <td class="hide-mobile salary-text">{{ job.salary || '—' }}</td>
@@ -516,6 +548,7 @@
           <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center">
             <span class="badge" :class="badgeClass(selectedJob.status)">{{ selectedJob.status }}</span>
             <span class="tag-work-type" v-if="selectedJob.workType">{{ selectedJob.workType }}</span>
+            <span class="chip-referral" :class="{ on: selectedJob.referral }" @click="toggleReferral(selectedJob)">🤝 Referral</span>
             <span v-if="isFollowUpDue(selectedJob)" class="followup-flag">🔔 Follow up due</span>
           </div>
         </div>
@@ -563,9 +596,9 @@
           </div>
           <div v-if="!settings.openaiKey" class="hint">Add OpenAI key in Settings to enable</div>
           <template v-else-if="companyData.snapshot">
-            <div class="company-snapshot collapsible-body" :class="{ clamped: !expanded.profile }" v-html="mdToHtml(companyData.snapshot)"></div>
+            <div class="company-snapshot" :class="{ clamped: !expanded.profile }" v-html="mdToHtml(companyData.snapshot)" @click="!expanded.profile && (expanded.profile = true)"></div>
             <button class="collapse-toggle" @click="expanded.profile = !expanded.profile" style="margin-top:8px">
-              <span class="collapse-chevron" :class="{ open: expanded.profile }">▸</span>{{ expanded.profile ? 'Show less' : 'Show more' }}
+              {{ expanded.profile ? '▾ Show less' : '▸ Show more' }}
             </button>
           </template>
           <div v-else class="company-snapshot snapshot-loading">Click "Get Insights" for size, stage, market cap, and Glassdoor-style culture notes. Saved for every {{ selectedJob.company }} role.</div>
@@ -640,6 +673,7 @@
           <div class="detail-section-title">Activity</div>
           <div class="timeline">
             <div v-for="(a, idx) in [...selectedJob.activity].reverse()" :key="idx" class="timeline-item">
+              <button class="timeline-del" @click="deleteActivity(selectedJob.activity.length - 1 - idx)" title="Delete this step">×</button>
               <div class="timeline-text">{{ a.text }}</div>
               <div class="timeline-date">{{ formatDate(a.date) }}</div>
             </div>
@@ -694,7 +728,7 @@
         <div class="form-group"><label>OpenAI API Key</label>
           <div class="key-field">
             <input :type="showKeys ? 'text' : 'password'" v-model="settings.openaiKey" placeholder="sk-…" />
-            <button class="key-eye" type="button" @click="showKeys = !showKeys">{{ showKeys ? '🙈' : '👁' }}</button>
+            <button class="key-eye" type="button" @click="showKeys = !showKeys">{{ showKeys ? 'Hide' : 'Show' }}</button>
           </div>
           <div class="hint">For AI extraction and company snapshots. Stored only in this browser — never on the public site.</div>
         </div>
@@ -702,7 +736,7 @@
         <div class="form-group"><label>GitHub Personal Access Token</label>
           <div class="key-field">
             <input :type="showKeys ? 'text' : 'password'" v-model="settings.githubToken" placeholder="ghp_…" />
-            <button class="key-eye" type="button" @click="showKeys = !showKeys">{{ showKeys ? '🙈' : '👁' }}</button>
+            <button class="key-eye" type="button" @click="showKeys = !showKeys">{{ showKeys ? 'Hide' : 'Show' }}</button>
           </div>
           <div class="hint">Must be created with the <strong>repo</strong> scope checked, or sync won't work.</div>
         </div>
@@ -717,6 +751,7 @@
         <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">Test Connection</button>
           <button class="btn btn-secondary btn-sm" @click="pullFromGithub" :disabled="!settings.githubToken">Pull Latest Data</button>
+          <button class="btn btn-secondary btn-sm" @click="exportJson">⬇ Export Backup</button>
         </div>
       </div>
       <div class="modal-footer"><button class="btn btn-ghost" @click="showSettings = false">Cancel</button><button class="btn btn-primary" @click="saveSettings">Save Settings</button></div>
@@ -732,7 +767,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v5';
+    const appVersion  = 'v6';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -760,7 +795,7 @@ createApp({
     const expanded = reactive({ profile: false, companyNotes: true, roleNotes: true });
     let lastPull = 0;
 
-    const statuses = ['Watching','Applied','Interviewing','Offer','Accepted','Rejected'];
+    const statuses = ['Interested','Applied','Interviewing','Offer','Accepted','Rejected'];
 
     const settings = reactive({
       openaiKey: '', githubToken: '', githubUser: '', githubRepo: '', tokenExpiry: '', urlMode: 'quick'
@@ -785,11 +820,11 @@ createApp({
     }
     function showToast(msg, ms = 2500) { toast.value = msg; setTimeout(() => toast.value = '', ms); }
     function badgeClass(s) {
-      return { Watching:'badge-watching', Applied:'badge-applied', Interviewing:'badge-interviewing',
-        Offer:'badge-offer', Accepted:'badge-accepted', Rejected:'badge-rejected' }[s] || 'badge-watching';
+      return { Interested:'badge-interested', Applied:'badge-applied', Interviewing:'badge-interviewing',
+        Offer:'badge-offer', Accepted:'badge-accepted', Rejected:'badge-rejected' }[s] || 'badge-interested';
     }
     const STATUS_COLORS = {
-      Watching:     ['rgba(143,144,111,0.22)', '#b8b89a'],
+      Interested:   ['rgba(143,144,111,0.22)', '#b8b89a'],
       Applied:      ['rgba(245,121,46,0.20)',  '#f5924a'],
       Interviewing: ['rgba(214,177,58,0.22)',  '#e7c558'],
       Offer:        ['rgba(176,138,79,0.28)',  '#d6ad77'],
@@ -797,7 +832,7 @@ createApp({
       Rejected:     ['rgba(214,90,58,0.22)',   '#e88066']
     };
     function statusStyle(s) {
-      const c = STATUS_COLORS[s] || STATUS_COLORS.Watching;
+      const c = STATUS_COLORS[s] || STATUS_COLORS.Interested;
       return { backgroundColor: c[0], color: c[1] };
     }
     function countByStatus(s) { return jobs.value.filter(j => j.status === s).length; }
@@ -806,6 +841,11 @@ createApp({
     function logActivity(job, text) {
       if (!job.activity) job.activity = [];
       job.activity.push({ date: today(), text });
+    }
+
+    // Migrate legacy "Watching" status to "Interested"
+    function normalizeStatuses() {
+      jobs.value.forEach(j => { if (j.status === 'Watching') j.status = 'Interested'; });
     }
 
     // ── Follow-ups ──
@@ -867,7 +907,7 @@ createApp({
         location: form.location.trim(), workType: form.workType, salary: form.salary.trim(),
         status: form.status, url: form.url.trim(), appliedDate: form.appliedDate,
         updatedDate: today(), roleNotes: form.roleNotes.trim(),
-        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, activity: []
+        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, referral: false, activity: []
       };
       logActivity(job, `Added · status: ${job.status}`);
       jobs.value.unshift(job);
@@ -882,6 +922,8 @@ createApp({
       expanded.profile = false; expanded.companyNotes = true; expanded.roleNotes = true;
     }
     function toggleStar(job) { job.starred = !job.starred; saveData(); }
+    function toggleReferral(job) { job.referral = !job.referral; saveData(); }
+    function deleteActivity(idx) { selectedJob.value.activity.splice(idx, 1); saveData(); }
     function updateJobStatus() {
       selectedJob.value.updatedDate = today();
       logActivity(selectedJob.value, `Status → ${selectedJob.value.status}`);
@@ -1110,6 +1152,7 @@ If unsure on a point, say so briefly.`;
             settings.tokenExpiry = decoded.meta.tokenExpiry; persistSettings();
           }
         }
+        normalizeStatuses();
         syncState.value = 'ok'; updateBadge();
         showToast('🔄 Data pulled from GitHub');
       } catch(e) { syncState.value = 'error'; showToast('⚠️ Pull failed: ' + e.message, 4000); }
@@ -1179,6 +1222,7 @@ If unsure on a point, say so briefly.`;
       loadSettings();
       const localJobs = localStorage.getItem('jh_jobs');
       if (localJobs) jobs.value = JSON.parse(localJobs);
+      normalizeStatuses();
       const localCo = localStorage.getItem('jh_companies');
       if (localCo) Object.assign(companies, JSON.parse(localCo));
       if (settings.githubToken) await pullFromGithub();
@@ -1199,7 +1243,7 @@ If unsure on a point, say so briefly.`;
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
-      openAddModal, saveJob, openDetail, toggleStar, updateJobStatus, deleteJob,
+      openAddModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, saveContact, deleteContact, saveCompanyData,
       extractFromText, extractFromUrl, fetchSnapshot, exportJson,
