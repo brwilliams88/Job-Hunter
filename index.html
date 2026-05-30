@@ -111,7 +111,7 @@
 
     /* ── Stats ── */
     .stats-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      display: grid; grid-template-columns: repeat(6, 1fr);
       gap: 12px; margin-bottom: 20px;
     }
     .stat-card {
@@ -172,6 +172,10 @@
     td { padding: 11px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
     tr:hover td { background: rgba(245,121,46,0.05); cursor: pointer; }
     .company-name { font-weight: 600; }
+    /* Title cell: star centered, link pinned to a consistent column */
+    .title-cell { display: flex; align-items: center; gap: 10px; }
+    .title-main { flex: 1; min-width: 0; }
+    .title-cell .row-link { flex-shrink: 0; }
     /* Star toggle */
     .star-toggle { cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; user-select: none; transition: transform 0.1s; }
     .star-toggle:hover { transform: scale(1.2); }
@@ -289,9 +293,31 @@
     /* Referral indicators */
     .ref-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(127,174,58,0.22); color: var(--green); white-space: nowrap; }
     .ref-mini { font-size: 10px; color: var(--green); background: rgba(127,174,58,0.18); padding: 1px 7px; border-radius: 10px; margin-top: 4px; display: inline-block; }
-    /* Checkbox row */
-    .check-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); text-transform: none; letter-spacing: 0; font-weight: 400; cursor: pointer; margin-top: 4px; }
-    .check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+    /* Referral toggle block */
+    .referral-block { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+    .switch-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: var(--text); user-select: none; }
+    .switch-row .switch-emoji { font-size: 15px; }
+    .switch { position: relative; width: 38px; height: 22px; border-radius: 22px; background: var(--border); transition: background 0.15s; flex-shrink: 0; }
+    .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #cfcdb8; transition: transform 0.15s; }
+    .switch.on { background: var(--accent); }
+    .switch.on::after { transform: translateX(16px); background: #fff; }
+    .referrer-input { margin-top: 10px; }
+
+    /* AI autofill panel + manual divider (Add Job) */
+    .ai-panel { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .ai-panel-title { font-size: 13px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+    .ai-panel-sub { font-size: 11px; color: var(--muted); margin: 3px 0 12px; }
+    .ai-or { text-align: center; font-size: 11px; color: var(--muted); margin: 10px 0 8px; }
+    .manual-divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+    .manual-divider::before, .manual-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* Missing-field highlight after AI extract */
+    .needs-fill { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent) inset; }
+
+    /* Prevent iOS zoom-on-focus (inputs must be >=16px on mobile) */
+    @media (max-width: 640px) {
+      input[type="text"], input[type="url"], input[type="date"], input[type="password"], textarea, select { font-size: 16px; }
+    }
     /* Open-posting link in table row */
     .row-link { color: var(--muted); display: inline-flex; align-items: center; opacity: 0.6; }
     .row-link:hover { color: var(--accent); opacity: 1; }
@@ -373,7 +399,6 @@
         <div class="sync-dot" :class="syncState === 'ok' ? 'sync-ok' : syncState === 'busy' ? 'sync-busy' : 'sync-err'"></div>
         <span class="hide-mobile">{{ syncState === 'ok' ? 'Synced' : syncState === 'busy' ? 'Saving…' : 'Sync error' }}</span>
       </div>
-      <button class="btn btn-secondary btn-sm" @click="showStats = true" title="Pipeline stats">📊</button>
       <button class="btn btn-secondary btn-sm" @click="showSettings = true">⚙️</button>
       <button class="btn btn-primary" @click="openAddModal">+ Add Job</button>
     </div>
@@ -482,18 +507,16 @@
           <tr v-for="job in filteredJobs" :key="job.id" @click="openDetail(job)"
               :class="{ 'row-followup': isFollowUpDue(job), 'row-starred': job.starred }">
             <td>
-              <div style="display:flex; align-items:flex-start; gap:8px">
+              <div class="title-cell">
                 <span class="star-toggle" :class="{ starred: job.starred }" @click.stop="toggleStar(job)">{{ job.starred ? '★' : '☆' }}</span>
-                <div>
-                  <div style="display:flex; align-items:center; gap:7px">
-                    <span class="company-name">{{ job.title }}</span>
-                    <a v-if="job.url" :href="job.url" target="_blank" class="row-link" @click.stop title="Open job posting">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    </a>
-                  </div>
+                <div class="title-main">
+                  <div class="company-name">{{ job.title }}</div>
                   <div v-if="job.referral" class="ref-mini">🤝 Referral</div>
                   <div v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</div>
                 </div>
+                <a v-if="job.url" :href="job.url" target="_blank" class="row-link" @click.stop title="Open job posting">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
               </div>
             </td>
             <td class="location-text">{{ job.company }}</td>
@@ -516,51 +539,50 @@
   <div class="modal-overlay" v-if="showAddModal" @click.self="showAddModal = false">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Add Job</div>
+        <div class="modal-title">{{ editingJobId ? 'Edit Job' : 'Add Job' }}</div>
         <button class="close-btn" @click="showAddModal = false">×</button>
       </div>
       <div class="modal-body">
 
-        <!-- AI helpers -->
-        <div v-if="settings.openaiKey" class="form-group">
-          <label>Quick fill with AI — from a URL</label>
-          <input type="url" v-model="aiUrl" placeholder="Paste a job posting URL (company site, Greenhouse…)" />
-          <div style="display:flex; gap:8px; align-items:center; margin-top:4px; flex-wrap:wrap">
-            <select v-model="settings.urlMode" @change="persistSettings" style="width:auto; font-size:12px; padding:6px 10px">
+        <!-- AI autofill (optional) -->
+        <div v-if="settings.openaiKey && !editingJobId" class="ai-panel">
+          <div class="ai-panel-title">✨ Autofill from a posting</div>
+          <div class="ai-panel-sub">Drop in a link or the job text — we'll fill the form below for you to review.</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+            <input type="url" v-model="aiUrl" placeholder="Paste a job posting URL…" style="flex:1; min-width:150px" />
+            <button class="btn btn-secondary btn-sm" @click="extractFromUrl" :disabled="aiLoading || !aiUrl.trim()">
+              <span v-if="aiLoading && aiMode==='url'" class="spinning">⟳</span><span v-else>🌐</span>
+              {{ aiLoading && aiMode==='url' ? 'Reading…' : 'Fetch' }}
+            </button>
+          </div>
+          <div style="display:flex; justify-content:flex-end; margin-top:6px">
+            <select v-model="settings.urlMode" @change="persistSettings" style="width:auto; font-size:11px; padding:5px 8px">
               <option value="quick">Quick Fetch · low cost</option>
               <option value="web">Web Search · higher cost</option>
             </select>
-            <button class="btn btn-secondary btn-sm" @click="extractFromUrl" :disabled="aiLoading || !aiUrl.trim()">
-              <span v-if="aiLoading && aiMode==='url'" class="spinning">⟳</span><span v-else>🌐</span>
-              {{ aiLoading && aiMode==='url' ? 'Reading…' : 'Fetch from URL' }}
-            </button>
           </div>
-          <div class="hint">
-            <strong>Quick Fetch</strong> (~free) reads simple public pages. <strong>Web Search</strong> (~$0.03–0.05) is more reliable on tougher sites. Login-gated sites like LinkedIn/Indeed often need the paste box below.
-          </div>
-
-          <label style="margin-top:10px">…or paste the job description</label>
-          <textarea class="ai-paste-area" v-model="aiPasteText" placeholder="Paste the full job posting text here, then click Extract…"></textarea>
-          <button class="btn btn-secondary btn-sm" @click="extractFromText" :disabled="aiLoading || !aiPasteText.trim()" style="align-self:flex-start">
+          <div class="ai-or">— or paste the text —</div>
+          <textarea class="ai-paste-area" v-model="aiPasteText" placeholder="Paste the full job description here…" style="min-height:78px"></textarea>
+          <button class="btn btn-secondary btn-sm" @click="extractFromText" :disabled="aiLoading || !aiPasteText.trim()" style="margin-top:8px; width:100%; justify-content:center">
             <span v-if="aiLoading && aiMode==='text'" class="spinning">⟳</span><span v-else>✨</span>
             {{ aiLoading && aiMode==='text' ? 'Extracting…' : 'Extract from text' }}
           </button>
         </div>
 
-        <hr class="divider" v-if="settings.openaiKey" />
+        <div class="manual-divider" v-if="settings.openaiKey && !editingJobId" style="margin-top:4px">Job details</div>
 
         <div class="form-row">
-          <div class="form-group"><label>Company *</label><input type="text" v-model="form.company" placeholder="Acme Corp" /></div>
-          <div class="form-group"><label>Job Title *</label><input type="text" v-model="form.title" placeholder="Senior Product Manager" /></div>
+          <div class="form-group"><label>Company *</label><input type="text" v-model="form.company" :class="{ 'needs-fill': justExtracted && !form.company }" placeholder="Acme Corp" /></div>
+          <div class="form-group"><label>Job Title *</label><input type="text" v-model="form.title" :class="{ 'needs-fill': justExtracted && !form.title }" placeholder="Senior Product Manager" /></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Location</label><input type="text" v-model="form.location" placeholder="San Francisco, CA" /></div>
+          <div class="form-group"><label>Location</label><input type="text" v-model="form.location" :class="{ 'needs-fill': justExtracted && !form.location }" placeholder="San Francisco, CA" /></div>
           <div class="form-group"><label>Work Type</label>
-            <select v-model="form.workType"><option value="">Unknown</option><option>Remote</option><option>Hybrid</option><option>In-Office</option></select>
+            <select v-model="form.workType" :class="{ 'needs-fill': justExtracted && !form.workType }"><option value="">Unknown</option><option>Remote</option><option>Hybrid</option><option>In-Office</option></select>
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" placeholder="$120k–$150k" /></div>
+          <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" :class="{ 'needs-fill': justExtracted && !form.salary }" placeholder="$120K–$150K" /></div>
           <div class="form-group"><label>Status</label>
             <select v-model="form.status"><option v-for="s in statuses" :key="s">{{ s }}</option></select>
           </div>
@@ -570,11 +592,18 @@
           <div class="form-group"><label>Date Applied</label><input type="date" v-model="form.appliedDate" /></div>
         </div>
         <div class="form-group"><label>Role Notes</label><textarea v-model="form.roleNotes" placeholder="Why I'm excited about this role…"></textarea></div>
-        <label class="check-row"><input type="checkbox" v-model="form.referral" /> I have a referral for this role</label>
+
+        <div class="referral-block">
+          <div class="switch-row" @click="form.referral = !form.referral">
+            <span class="switch" :class="{ on: form.referral }"></span>
+            <span class="switch-emoji">🤝</span> I have a referral for this role
+          </div>
+          <input v-if="form.referral" class="referrer-input" type="text" v-model="form.referrer" placeholder="Who referred you? (name)" />
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" @click="showAddModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="saveJob" :disabled="!form.company || !form.title">Save Job</button>
+        <button class="btn btn-primary" @click="saveJob" :disabled="!form.company || !form.title">{{ editingJobId ? 'Save Changes' : 'Save Job' }}</button>
       </div>
     </div>
   </div>
@@ -592,12 +621,15 @@
           <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center">
             <span class="badge" :class="badgeClass(selectedJob.status)">{{ selectedJob.status }}</span>
             <span class="tag-work-type" v-if="selectedJob.workType">{{ selectedJob.workType }}</span>
-            <span v-if="selectedJob.referral" class="ref-pill">🤝 Referral</span>
+            <span v-if="selectedJob.referral" class="ref-pill">🤝 Referral{{ selectedJob.referrer ? ' · ' + selectedJob.referrer : '' }}</span>
             <span v-if="isFollowUpDue(selectedJob)" class="followup-flag">🔔 Follow up due</span>
           </div>
           <a v-if="selectedJob.url" :href="selectedJob.url" target="_blank" class="btn-view-posting">↗ View Job Posting</a>
         </div>
-        <button class="close-btn" @click="selectedJob = null">×</button>
+        <div style="display:flex; gap:6px; align-items:center; flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" @click="openEditModal(selectedJob)">✎ Edit</button>
+          <button class="close-btn" @click="selectedJob = null">×</button>
+        </div>
       </div>
 
       <div class="detail-body">
@@ -607,7 +639,7 @@
           <div class="detail-meta-grid">
             <div class="meta-item"><label>Location</label><div class="meta-value">{{ selectedJob.location || '—' }}</div></div>
             <div class="meta-item"><label>Salary</label><div class="meta-value">{{ selectedJob.salary || '—' }}</div></div>
-            <div class="meta-item"><label>Applied</label><input type="date" v-model="selectedJob.appliedDate" @change="saveData" style="margin-top:2px" /></div>
+            <div class="meta-item"><label>Applied</label><div class="meta-value">{{ formatDate(selectedJob.appliedDate) }}</div></div>
             <div class="meta-item"><label>Last Updated</label><div class="meta-value">{{ formatDate(selectedJob.updatedDate) }}</div></div>
           </div>
         </div>
@@ -624,10 +656,13 @@
               <input type="date" v-model="selectedJob.followUpDate" @change="saveData" />
             </div>
           </div>
-          <div class="hint">Set a follow-up date and it appears in "Follow-ups Due" + the app badge when it's reached. Leave blank for no reminder.</div>
-          <label class="check-row">
-            <input type="checkbox" v-model="selectedJob.referral" @change="saveData" /> I have a referral for this role
-          </label>
+          <div class="referral-block">
+            <div class="switch-row" @click="toggleReferral(selectedJob)">
+              <span class="switch" :class="{ on: selectedJob.referral }"></span>
+              <span class="switch-emoji">🤝</span> I have a referral for this role
+            </div>
+            <input v-if="selectedJob.referral" class="referrer-input" type="text" v-model="selectedJob.referrer" @blur="saveData" placeholder="Who referred you? (name)" />
+          </div>
         </div>
 
         <!-- Company Profile (shared) -->
@@ -793,7 +828,14 @@
         <div class="form-group"><label>Token Expiry Date</label><input type="date" v-model="settings.tokenExpiry" /><div class="hint">We'll remind you a week before this date to refresh your token.</div></div>
         <div class="settings-info">💡 <strong>How sync works:</strong> Your data is saved to <code>jobs.json</code> in your GitHub repo. Any device with these settings reads and writes the same file — keeping everything in sync automatically.</div>
         <div class="hint" style="text-align:center">Job Hunter {{ appVersion }}</div>
-        <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap">
+        <div class="manual-divider" style="margin:8px 0 4px">Tools</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" @click="showSettings = false; showStats = true">📊 Metrics Report</button>
+          <button class="btn btn-secondary btn-sm" @click="standardizeAll">✨ Standardize Formatting</button>
+        </div>
+        <div class="hint">Standardize rewrites salaries as $120K–$200K and trims locations to City, ST (no API cost).</div>
+        <div class="manual-divider" style="margin:8px 0 4px">Sync & Backup</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">Test Connection</button>
           <button class="btn btn-secondary btn-sm" @click="pullFromGithub" :disabled="!settings.githubToken">Pull Latest Data</button>
           <button class="btn btn-secondary btn-sm" @click="exportJson">⬇ Export Backup</button>
@@ -837,7 +879,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v9';
+    const appVersion  = 'v10';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -850,8 +892,10 @@ createApp({
     const filterStatus = ref('');
     const filterWorkType = ref('');
     const filterStarred = ref(false);
-    const sortKey  = ref('appliedDate');
+    const sortKey  = ref('createdAt');   // default order = when the job was added (newest first)
     const sortDir  = ref(-1);
+    const editingJobId = ref(null);
+    const justExtracted = ref(false);
     const aiUrl = ref('');
     const aiPasteText = ref('');
     const aiLoading = ref(false);
@@ -874,7 +918,7 @@ createApp({
 
     const form = reactive({
       company:'', title:'', location:'', workType:'', salary:'',
-      status:'Applied', url:'', appliedDate: today(), roleNotes:'', referral: false
+      status:'Applied', url:'', appliedDate: today(), roleNotes:'', referral: false, referrer: ''
     });
     const interviewForm = reactive({ round:'Phone Screen', date: today(), who:'', notes:'' });
     const contactForm   = reactive({ name:'', role:'', contact:'', notes:'' });
@@ -924,15 +968,58 @@ createApp({
       return max;
     }
 
+    // ── Formatting standardization (no API needed) ──
+    const US_STATES = { 'alabama':'AL','alaska':'AK','arizona':'AZ','arkansas':'AR','california':'CA','colorado':'CO','connecticut':'CT','delaware':'DE','florida':'FL','georgia':'GA','hawaii':'HI','idaho':'ID','illinois':'IL','indiana':'IN','iowa':'IA','kansas':'KS','kentucky':'KY','louisiana':'LA','maine':'ME','maryland':'MD','massachusetts':'MA','michigan':'MI','minnesota':'MN','mississippi':'MS','missouri':'MO','montana':'MT','nebraska':'NE','nevada':'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND','ohio':'OH','oklahoma':'OK','oregon':'OR','pennsylvania':'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD','tennessee':'TN','texas':'TX','utah':'UT','vermont':'VT','virginia':'VA','washington':'WA','west virginia':'WV','wisconsin':'WI','wyoming':'WY','district of columbia':'DC' };
+    // "$159,400–$245,700" -> "$159K–$245K"; "$120k" -> "$120K"
+    function normalizeSalary(s) {
+      if (!s) return '';
+      const nums = (s.match(/[\d,.]+\s*[kKmM]?/g) || []).map(t => {
+        const m = t.match(/([\d,.]+)\s*([kKmM]?)/); if (!m) return null;
+        let n = parseFloat(m[1].replace(/,/g,'')); if (isNaN(n)) return null;
+        const suf = m[2].toLowerCase();
+        if (suf === 'k') n *= 1e3; else if (suf === 'm') n *= 1e6;
+        return n;
+      }).filter(n => n && n >= 1000);
+      if (!nums.length) return s.trim();
+      const fmt = n => n >= 1e6 ? '$' + (n/1e6).toFixed(n % 1e6 ? 1 : 0) + 'M' : '$' + Math.round(n/1000) + 'K';
+      const lo = Math.min(...nums), hi = Math.max(...nums);
+      return lo === hi ? fmt(lo) : `${fmt(lo)}–${fmt(hi)}`;
+    }
+    // "Mountain View, California; Warren, Michigan" -> "Mountain View, CA; Warren, MI"; drops country & USA
+    function normalizeLocation(s) {
+      if (!s) return '';
+      return s.split(/\s*;\s*/).map(part => {
+        const bits = part.split(/\s*,\s*/)
+          .map(b => b.trim())
+          .filter(b => b && !/^(united states|usa|u\.s\.a?\.?|us)$/i.test(b))
+          .map(b => US_STATES[b.toLowerCase()] || b);
+        return bits.join(', ');
+      }).filter(Boolean).join('; ');
+    }
+    function standardizeAll() {
+      let n = 0;
+      jobs.value.forEach(j => {
+        const ns = normalizeSalary(j.salary), nl = normalizeLocation(j.location);
+        if (ns !== (j.salary||'')) { j.salary = ns; n++; }
+        if (nl !== (j.location||'')) { j.location = nl; n++; }
+      });
+      saveData();
+      showToast(n ? `✨ Standardized ${n} field(s)` : 'Everything already looks standardized');
+    }
+
     // ── Activity log ──
     function logActivity(job, text) {
       if (!job.activity) job.activity = [];
       job.activity.push({ date: today(), text });
     }
 
-    // Migrate legacy "Watching" status to "Interested"
+    // Migrate legacy data: "Watching" → "Interested"; backfill createdAt preserving current order
     function normalizeStatuses() {
-      jobs.value.forEach(j => { if (j.status === 'Watching') j.status = 'Interested'; });
+      const n = jobs.value.length;
+      jobs.value.forEach((j, i) => {
+        if (j.status === 'Watching') j.status = 'Interested';
+        if (!j.createdAt) j.createdAt = Date.now() - (n - i) * 1000; // earlier rows = older
+      });
     }
 
     // ── Follow-ups ──
@@ -1014,25 +1101,48 @@ createApp({
       });
     });
 
-    // ── Add / Save Job ──
+    // ── Add / Edit / Save Job ──
     function openAddModal() {
-      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'Applied', url:'', appliedDate: today(), roleNotes:'', referral: false });
+      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'Applied', url:'', appliedDate: today(), roleNotes:'', referral: false, referrer: '' });
+      editingJobId.value = null; justExtracted.value = false;
       aiUrl.value = ''; aiPasteText.value = '';
       showAddModal.value = true;
     }
+    function openEditModal(job) {
+      Object.assign(form, {
+        company: job.company, title: job.title, location: job.location, workType: job.workType,
+        salary: job.salary, status: job.status, url: job.url, appliedDate: job.appliedDate,
+        roleNotes: job.roleNotes || '', referral: !!job.referral, referrer: job.referrer || ''
+      });
+      editingJobId.value = job.id; justExtracted.value = false;
+      showAddModal.value = true;
+    }
     function saveJob() {
-      const job = {
-        id: uid(), company: form.company.trim(), title: form.title.trim(),
-        location: form.location.trim(), workType: form.workType, salary: form.salary.trim(),
-        status: form.status, url: form.url.trim(), appliedDate: form.appliedDate,
-        updatedDate: today(), roleNotes: form.roleNotes.trim(),
-        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, referral: form.referral, activity: []
+      const fields = {
+        company: form.company.trim(), title: form.title.trim(),
+        location: normalizeLocation(form.location.trim()), workType: form.workType,
+        salary: normalizeSalary(form.salary.trim()), status: form.status,
+        url: form.url.trim(), appliedDate: form.appliedDate, roleNotes: form.roleNotes.trim(),
+        referral: form.referral, referrer: form.referral ? form.referrer.trim() : '',
+        updatedDate: today()
       };
-      logActivity(job, `Added · status: ${job.status}`);
-      jobs.value.unshift(job);
+      if (editingJobId.value) {
+        const job = jobs.value.find(j => j.id === editingJobId.value);
+        if (job) {
+          const statusChanged = job.status !== fields.status;
+          Object.assign(job, fields);
+          if (statusChanged) logActivity(job, `Status → ${job.status}`);
+        }
+        showToast('✅ Changes saved!');
+      } else {
+        const job = { id: uid(), createdAt: Date.now(), interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, activity: [], ...fields };
+        logActivity(job, `Added · status: ${job.status}`);
+        jobs.value.unshift(job);
+        showToast('✅ Job saved!');
+      }
+      editingJobId.value = null;
       showAddModal.value = false;
       saveData();
-      showToast('✅ Job saved!');
     }
 
     // ── Detail ──
@@ -1041,6 +1151,7 @@ createApp({
       expanded.profile = false; expanded.companyNotes = true; expanded.roleNotes = true;
     }
     function toggleStar(job) { job.starred = !job.starred; saveData(); }
+    function toggleReferral(job) { job.referral = !job.referral; if (!job.referral) job.referrer = ''; saveData(); }
     function deleteActivity(idx) { selectedJob.value.activity.splice(idx, 1); saveData(); }
     function updateJobStatus() {
       selectedJob.value.updatedDate = today();
@@ -1116,9 +1227,10 @@ createApp({
     function applyExtracted(parsed) {
       if (parsed.company)  form.company  = parsed.company;
       if (parsed.title)    form.title    = parsed.title;
-      if (parsed.location) form.location = parsed.location;
+      if (parsed.location) form.location = normalizeLocation(parsed.location);
       if (parsed.workType) form.workType = parsed.workType;
-      if (parsed.salary)   form.salary   = parsed.salary;
+      if (parsed.salary)   form.salary   = normalizeSalary(parsed.salary);
+      justExtracted.value = true;  // highlight any fields still missing
     }
 
     // Parse plain job text via cheap gpt-4o-mini
@@ -1384,7 +1496,7 @@ If unsure on a point, say so briefly.`;
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
-      openAddModal, saveJob, openDetail, toggleStar, deleteActivity, updateJobStatus, deleteJob,
+      editingJobId, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, standardizeAll, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, saveContact, deleteContact, saveCompanyData,
       extractFromText, extractFromUrl, fetchSnapshot, exportJson, importInput, triggerImport, importJson,
