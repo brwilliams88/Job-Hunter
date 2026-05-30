@@ -732,7 +732,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v4';
+    const appVersion  = 'v5';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -1096,7 +1096,7 @@ If unsure on a point, say so briefly.`;
       try {
         syncState.value = 'busy';
         const res = await fetch(githubApiUrl(), { headers:{ 'Authorization':`Bearer ${settings.githubToken}`, 'Accept':'application/vnd.github+json' } });
-        if (res.status === 404) { syncState.value = 'ok'; return; }
+        if (res.status === 404) { githubFileSha.value = ''; syncState.value = 'ok'; return; }
         const data = await res.json();
         githubFileSha.value = data.sha;
         const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));

@@ -1,5 +1,5 @@
 // Job Hunter service worker — offline shell caching
-const CACHE = 'job-hunter-v4';
+const CACHE = 'job-hunter-v5';
 const ASSETS = [
   './',
   './index.html',
