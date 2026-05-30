@@ -443,12 +443,21 @@
     .spend-num { font-size: 16px; font-weight: 700; color: var(--green); }
     .spend-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
     .spend-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
-    .spend-table th { position: static; background: none; text-align: left; padding: 6px 8px; color: var(--muted); font-size: 10px; text-transform: uppercase; cursor: default; }
-    .spend-table td { padding: 6px 8px; border-top: 1px solid var(--border); }
+    .spend-table thead { background: transparent; }
+    .spend-table th { position: static; background: transparent; text-align: left; padding: 6px 8px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; cursor: default; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .spend-table td { padding: 7px 8px; border-top: 1px solid var(--border); }
     .spend-table th:not(:first-child), .spend-table td:not(:first-child) { text-align: right; }
 
     /* Keep certain rows 2-up even on mobile */
-    @media (max-width: 640px) { .form-row.keep-2 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) {
+      .form-row.keep-2 { grid-template-columns: 1fr 1fr; }
+      .spend-grid { grid-template-columns: repeat(2, 1fr); }
+      .modal-overlay { padding: 10px; }
+      .modal-body { padding: 16px; }
+      /* never let inputs push past the modal edge */
+      .modal input, .modal select, .modal textarea { max-width: 100%; }
+      input[type="date"] { width: 100%; box-sizing: border-box; }
+    }
 
     /* Themed scrollbars (desktop) */
     .detail-panel::-webkit-scrollbar, .modal::-webkit-scrollbar, .table-wrap::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -929,12 +938,11 @@
         <div class="manual-divider">Tools</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" @click="showStats = true">📊 Pipeline</button>
-          <button class="btn btn-secondary btn-sm" @click="standardizeAll">✨ Standardize Formatting</button>
-          <button class="btn btn-secondary btn-sm" @click="detectStages" :disabled="stageBackfillRunning">
-            <span v-if="stageBackfillRunning" class="spinning">⟳</span> Detect Company Stages
+          <button class="btn btn-secondary btn-sm" @click="cleanUpData" :disabled="stageBackfillRunning">
+            <span v-if="stageBackfillRunning" class="spinning">⟳</span> 🧹 Clean Up Data
           </button>
         </div>
-        <div class="hint">Standardize rewrites salaries as $120K–$200K and trims locations to City, ST (no API cost). Detect Stages classifies any companies missing a stage (cheap AI call each).</div>
+        <div class="hint">Standardizes salaries to $120K–$200K, trims locations to City, ST, and detects any missing company stages.</div>
 
         <div class="manual-divider">API Usage</div>
         <div class="spend-grid">
@@ -1036,7 +1044,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v11';
+    const appVersion  = 'v12';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -1173,17 +1181,6 @@ createApp({
         return bits.join(', ');
       }).filter(Boolean).join('; ').replace(/\s{2,}/g,' ').trim();
     }
-    function standardizeAll() {
-      let n = 0;
-      jobs.value.forEach(j => {
-        const ns = normalizeSalary(j.salary), nl = normalizeLocation(j.location);
-        if (ns !== (j.salary||'')) { j.salary = ns; n++; }
-        if (nl !== (j.location||'')) { j.location = nl; n++; }
-      });
-      saveData();
-      showToast(n ? `✨ Standardized ${n} field(s)` : 'Everything already looks standardized');
-    }
-
     // ── API cost tracking ──
     function money(n) { if (n == null) return '—'; return n < 1 ? '$' + n.toFixed(4) : '$' + n.toFixed(2); }
     function logApi(type, model, usage, web) {
@@ -1191,9 +1188,27 @@ createApp({
       const inTok  = usage ? (usage.input_tokens  ?? usage.prompt_tokens     ?? 0) : 0;
       const outTok = usage ? (usage.output_tokens ?? usage.completion_tokens ?? 0) : 0;
       const cost = inTok/1e6*p.in + outTok/1e6*p.out + (web ? WEB_SEARCH_FEE : 0);
-      apiLog.value.push({ ts: Date.now(), type, model, inTok, outTok, web: !!web, cost });
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+      apiLog.value.push({ id, ts: Date.now(), type, model, inTok, outTok, web: !!web, cost });
       if (apiLog.value.length > 3000) apiLog.value = apiLog.value.slice(-3000);
-      localStorage.setItem('jh_apilog', JSON.stringify(apiLog.value));
+      saveData();  // persists locally + syncs the log to GitHub
+    }
+
+    // One-time seed of usage that happened before v11 added tracking (from the OpenAI dashboard).
+    // Fixed ids keep it from double-counting across devices.
+    function seedHistory() {
+      if (apiLog.value.some(e => e.id && e.id.startsWith('seed-'))) return;
+      const now = Date.now(), h = 3600000;
+      const seed = [];
+      // 9 web-search calls (URL fetches + company insights) + 2 text extracts ≈ $0.26, ~6,101 tokens
+      const webTypes = ['URL web search','URL web search','URL web search','URL web search',
+                        'Company insights','Company insights','Company insights','Company insights','Company insights'];
+      webTypes.forEach((t, i) => seed.push({ id:'seed-'+i, ts: now - (20 - i)*h, type: t, model:'gpt-4o', inTok: 640, outTok: 280, web: true, cost: 0.0286 }));
+      seed.push({ id:'seed-9',  ts: now - 3*h, type:'Extract from text', model:'gpt-4o-mini', inTok: 360, outTok: 70, web:false, cost: 0.0003 });
+      seed.push({ id:'seed-10', ts: now - 2*h, type:'Extract from text', model:'gpt-4o-mini', inTok: 181, outTok: 50, web:false, cost: 0.0003 });
+      apiLog.value.push(...seed);
+      apiLog.value.sort((a,b)=> (a.ts||0)-(b.ts||0));
+      saveData();
     }
 
     // ── Filters ──
@@ -1221,18 +1236,28 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
       return stages.find(s => out.includes(s.toLowerCase())) || '';
     }
     const stageBackfillRunning = ref(false);
-    async function detectStages() {
-      if (!settings.openaiKey) { showToast('Add your OpenAI key first'); return; }
+    // One button: standardize formatting (local) + detect missing company stages (AI)
+    async function cleanUpData() {
+      // 1) Local formatting standardization (free)
+      jobs.value.forEach(j => {
+        const ns = normalizeSalary(j.salary), nl = normalizeLocation(j.location);
+        if (ns !== (j.salary||'')) j.salary = ns;
+        if (nl !== (j.location||'')) j.location = nl;
+      });
+      // 2) Detect company stage for any companies missing it (cheap AI)
       const need = [...new Set(jobs.value.filter(j => !j.stage && j.company).map(j => j.company))];
-      if (!need.length) { showToast('Every job already has a stage'); return; }
-      if (!confirm(`Detect company stage for ${need.length} compan${need.length>1?'ies':'y'}? (~${money(need.length*0.0004)} of API)`)) return;
-      stageBackfillRunning.value = true;
-      for (const co of need) {
-        try { const st = await classifyStage(co); if (st) jobs.value.filter(j => j.company===co && !j.stage).forEach(j => j.stage = st); }
-        catch(e) {}
+      if (need.length && settings.openaiKey) {
+        if (confirm(`Clean up formatting and detect company stage for ${need.length} compan${need.length>1?'ies':'y'}? (uses a small AI call for each)`)) {
+          stageBackfillRunning.value = true;
+          for (const co of need) {
+            try { const st = await classifyStage(co); if (st) jobs.value.filter(j => j.company===co && !j.stage).forEach(j => j.stage = st); }
+            catch(e) {}
+          }
+          stageBackfillRunning.value = false;
+        }
       }
-      stageBackfillRunning.value = false;
-      saveData(); showToast('✨ Company stages detected');
+      saveData();
+      showToast('✨ Data cleaned up');
     }
 
     // ── Manual sync ──
@@ -1684,7 +1709,16 @@ If unsure on a point, say so briefly.`;
     function githubApiUrl() {
       return `https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}/contents/jobs.json`;
     }
-    function payload() { return { jobs: jobs.value, companies, meta: { tokenExpiry: settings.tokenExpiry } }; }
+    function payload() { return { jobs: jobs.value, companies, meta: { tokenExpiry: settings.tokenExpiry, apiLog: apiLog.value.slice(-1500) } }; }
+
+    // Merge a remote API log into the local one (dedupe by id) so usage aggregates across devices
+    function mergeApiLog(remote) {
+      if (!Array.isArray(remote) || !remote.length) return;
+      const seen = new Set(apiLog.value.map(e => e.id).filter(Boolean));
+      let added = false;
+      remote.forEach(e => { if (e && e.id && !seen.has(e.id)) { apiLog.value.push(e); seen.add(e.id); added = true; } });
+      if (added) { apiLog.value.sort((a,b)=> (a.ts||0)-(b.ts||0)); localStorage.setItem('jh_apilog', JSON.stringify(apiLog.value)); }
+    }
 
     async function pullFromGithub() {
       if (!settings.githubToken || !settings.githubUser || !settings.githubRepo) return;
@@ -1704,6 +1738,7 @@ If unsure on a point, say so briefly.`;
           if (decoded.meta && decoded.meta.tokenExpiry && !settings.tokenExpiry) {
             settings.tokenExpiry = decoded.meta.tokenExpiry; persistSettings();
           }
+          if (decoded.meta && decoded.meta.apiLog) mergeApiLog(decoded.meta.apiLog);
         }
         normalizeStatuses();
         syncState.value = 'ok'; updateBadge(); markSynced();
@@ -1760,6 +1795,7 @@ If unsure on a point, say so briefly.`;
     function saveData() {
       localStorage.setItem('jh_jobs', JSON.stringify(jobs.value));
       localStorage.setItem('jh_companies', JSON.stringify(companies));
+      localStorage.setItem('jh_apilog', JSON.stringify(apiLog.value));
       updateBadge();
       pushToGithub();
     }
@@ -1782,6 +1818,7 @@ If unsure on a point, say so briefly.`;
       if (localApi) { try { apiLog.value = JSON.parse(localApi); } catch(e){} }
       lastSync.value = Number(localStorage.getItem('jh_lastSync')) || '';
       if (settings.githubToken) await pullFromGithub();
+      seedHistory();   // backfill pre-v11 usage once (deduped by fixed ids)
       updateBadge();
       if (!settings.openaiKey || !settings.githubToken) setTimeout(() => showToast('👋 Open ⚙️ Settings to configure your keys', 4000), 800);
       if ('serviceWorker' in navigator) { try { await navigator.serviceWorker.register('sw.js'); } catch(e) {} }
@@ -1799,8 +1836,8 @@ If unsure on a point, say so briefly.`;
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
-      clearFilters, setStatusFilter, toggleDream, detectStages, stageBackfillRunning, manualSync,
-      editingJobId, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, standardizeAll, updateJobStatus, deleteJob,
+      clearFilters, setStatusFilter, toggleDream, cleanUpData, stageBackfillRunning, manualSync,
+      editingJobId, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, saveContact, deleteContact, saveCompanyData,
       extractFromText, extractFromUrl, fetchSnapshot, exportJson, importInput, triggerImport, importJson,
