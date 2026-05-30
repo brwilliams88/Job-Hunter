@@ -43,15 +43,18 @@
       font-size: 14px;
     }
 
-    /* Subtle camo blobs behind the header */
+    /* Tiling camo texture behind the header (soft-edged blobs that repeat seamlessly) */
     .app-header {
       position: sticky; top: 0; z-index: 100;
-      background:
-        radial-gradient(circle at 12% 40%, rgba(107,122,58,0.22) 0 60px, transparent 61px),
-        radial-gradient(circle at 30% 80%, rgba(60,70,30,0.30) 0 50px, transparent 51px),
-        radial-gradient(circle at 55% 20%, rgba(90,100,45,0.18) 0 70px, transparent 71px),
-        radial-gradient(circle at 78% 70%, rgba(50,58,26,0.28) 0 55px, transparent 56px),
-        var(--surface);
+      background-color: var(--surface);
+      background-image:
+        radial-gradient(ellipse 60px 44px at 34px 38px,  rgba(107,122,58,0.22), transparent 62%),
+        radial-gradient(ellipse 74px 52px at 150px 26px, rgba(56,66,28,0.34),  transparent 62%),
+        radial-gradient(ellipse 54px 40px at 108px 132px,rgba(92,104,46,0.16), transparent 62%),
+        radial-gradient(ellipse 66px 50px at 226px 112px,rgba(48,56,24,0.30),  transparent 62%),
+        radial-gradient(ellipse 50px 38px at 28px 150px, rgba(80,92,40,0.18),  transparent 62%);
+      background-size: 260px 180px;
+      background-repeat: repeat;
       border-bottom: 1px solid var(--border);
       padding: 14px 20px;
       display: flex; align-items: center; justify-content: space-between;
@@ -120,24 +123,35 @@
     .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .search-wrap { position: relative; flex: 1; min-width: 200px; }
     .search-wrap input {
-      width: 100%; padding: 8px 12px 8px 34px;
+      width: 100%; padding: 8px 12px 8px 40px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); color: var(--text); font-size: 13px;
     }
-    .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; opacity: 0.7; }
     select { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; cursor: pointer; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
     /* ── Table ── */
-    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+    .table-wrap { border-radius: var(--radius); border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; }
     thead { background: var(--surface2); }
     th {
       padding: 11px 14px; text-align: left; font-size: 11px;
       text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted);
       white-space: nowrap; cursor: pointer; user-select: none;
+      position: sticky; top: 59px; background: var(--surface2); z-index: 5;
     }
     th:hover { color: var(--text); }
+    /* Inline status dropdown in the table */
+    .inline-status {
+      padding: 3px 22px 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      border: none; cursor: pointer; width: auto; min-width: 0;
+      background-position: right 6px center; background-size: 9px;
+      -webkit-appearance: none; appearance: none;
+      background-repeat: no-repeat;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23ece8d8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    }
+    .inline-status:focus { outline: 1px solid var(--accent); }
     th .sort-indicator { margin-left: 4px; opacity: 0.5; }
     th.active-sort { color: var(--accent); }
     th.active-sort .sort-indicator { opacity: 1; }
@@ -184,14 +198,16 @@
     .modal-footer { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 
     /* ── Form ── */
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
     input[type="text"], input[type="url"], input[type="date"], textarea, select {
       width: 100%; padding: 9px 12px; background: var(--surface2);
       border: 1px solid var(--border); border-radius: 8px; color: var(--text);
-      font-size: 13px; font-family: inherit;
+      font-size: 13px; font-family: inherit; min-width: 0;
     }
+    /* Stop iOS date inputs from overflowing their column */
+    input[type="date"] { -webkit-appearance: none; appearance: none; }
     textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     .ai-paste-area { min-height: 110px; }
     .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
@@ -208,8 +224,38 @@
     .meta-item label { display: block; }
     .meta-item .meta-value { font-size: 13px; margin-top: 2px; }
 
-    .company-snapshot { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+    .company-snapshot { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; color: var(--text); }
     .snapshot-loading { color: var(--muted); font-style: italic; }
+    /* Rendered markdown inside the snapshot */
+    .company-snapshot p { margin: 0 0 8px; }
+    .company-snapshot p:last-child { margin-bottom: 0; }
+    .company-snapshot ul { margin: 4px 0; padding-left: 18px; }
+    .company-snapshot li { margin: 3px 0; }
+    .company-snapshot strong { color: #fff; }
+    .company-snapshot a { color: var(--accent); text-decoration: none; }
+    .company-snapshot a:hover { text-decoration: underline; }
+
+    /* Collapsible sections */
+    .collapse-toggle { background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 0; }
+    .collapse-toggle:hover { color: var(--accent); }
+    .collapse-chevron { transition: transform 0.15s; display: inline-block; }
+    .collapse-chevron.open { transform: rotate(90deg); }
+    .collapsible-body { overflow: hidden; }
+    .collapsible-body.clamped { max-height: 220px; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+
+    /* Activity timeline */
+    .timeline { position: relative; padding-left: 18px; }
+    .timeline::before { content: ''; position: absolute; left: 4px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+    .timeline-item { position: relative; padding: 4px 0 10px; font-size: 12px; }
+    .timeline-item::before { content: ''; position: absolute; left: -17px; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); }
+    .timeline-text { color: var(--text); }
+    .timeline-date { color: var(--muted); font-size: 11px; }
+
+    /* Masked key field with reveal toggle */
+    .key-field { position: relative; }
+    .key-field input { padding-right: 38px; }
+    .key-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px; }
+    .key-eye:hover { color: var(--text); }
 
     .interview-entry, .contact-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
     .interview-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -379,7 +425,11 @@
             <td class="hide-mobile location-text">{{ job.location }}</td>
             <td class="hide-mobile"><span class="tag-work-type" v-if="job.workType">{{ job.workType }}</span></td>
             <td class="hide-mobile salary-text">{{ job.salary || '—' }}</td>
-            <td><span class="badge" :class="badgeClass(job.status)">{{ job.status }}</span></td>
+            <td @click.stop>
+              <select class="inline-status" :style="statusStyle(job.status)" v-model="job.status" @change="onInlineStatus(job)">
+                <option v-for="s in statuses" :key="s">{{ s }}</option>
+              </select>
+            </td>
             <td class="hide-mobile date-text">{{ formatDate(job.appliedDate) }}</td>
           </tr>
         </tbody>
@@ -398,13 +448,21 @@
 
         <!-- AI helpers -->
         <div v-if="settings.openaiKey" class="form-group">
-          <label>Quick fill with AI</label>
-          <input type="url" v-model="aiUrl" placeholder="Paste a job posting URL (LinkedIn, company site…)" />
-          <button class="btn btn-secondary btn-sm" @click="extractFromUrl" :disabled="aiLoading || !aiUrl.trim()" style="align-self:flex-start; margin-top:4px">
-            <span v-if="aiLoading && aiMode==='url'" class="spinning">⟳</span><span v-else>🌐</span>
-            {{ aiLoading && aiMode==='url' ? 'Searching the web…' : 'Fetch from URL' }}
-          </button>
-          <div class="hint">Uses AI web search — works best on public pages. If it can't read the page, paste the text below instead.</div>
+          <label>Quick fill with AI — from a URL</label>
+          <input type="url" v-model="aiUrl" placeholder="Paste a job posting URL (company site, Greenhouse…)" />
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px; flex-wrap:wrap">
+            <select v-model="settings.urlMode" @change="persistSettings" style="width:auto; font-size:12px; padding:6px 10px">
+              <option value="quick">Quick Fetch · low cost</option>
+              <option value="web">Web Search · higher cost</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" @click="extractFromUrl" :disabled="aiLoading || !aiUrl.trim()">
+              <span v-if="aiLoading && aiMode==='url'" class="spinning">⟳</span><span v-else>🌐</span>
+              {{ aiLoading && aiMode==='url' ? 'Reading…' : 'Fetch from URL' }}
+            </button>
+          </div>
+          <div class="hint">
+            <strong>Quick Fetch</strong> (~free) reads simple public pages. <strong>Web Search</strong> (~$0.03–0.05) is more reliable on tougher sites. Login-gated sites like LinkedIn/Indeed often need the paste box below.
+          </div>
 
           <label style="margin-top:10px">…or paste the job description</label>
           <textarea class="ai-paste-area" v-model="aiPasteText" placeholder="Paste the full job posting text here, then click Extract…"></textarea>
@@ -504,20 +562,35 @@
             </button>
           </div>
           <div v-if="!settings.openaiKey" class="hint">Add OpenAI key in Settings to enable</div>
-          <div v-else-if="companyData.snapshot" class="company-snapshot">{{ companyData.snapshot }}</div>
+          <template v-else-if="companyData.snapshot">
+            <div class="company-snapshot collapsible-body" :class="{ clamped: !expanded.profile }" v-html="mdToHtml(companyData.snapshot)"></div>
+            <button class="collapse-toggle" @click="expanded.profile = !expanded.profile" style="margin-top:8px">
+              <span class="collapse-chevron" :class="{ open: expanded.profile }">▸</span>{{ expanded.profile ? 'Show less' : 'Show more' }}
+            </button>
+          </template>
           <div v-else class="company-snapshot snapshot-loading">Click "Get Insights" for size, stage, market cap, and Glassdoor-style culture notes. Saved for every {{ selectedJob.company }} role.</div>
         </div>
 
         <!-- Company Notes (shared) -->
         <div>
-          <div class="detail-section-title">My Company Notes <span class="shared-tag">shared across {{ selectedJob.company }}</span></div>
-          <textarea v-model="companyData.notes" @blur="saveCompanyData" placeholder="What I think of this company, referrals, research…" style="width:100%; min-height:70px"></textarea>
+          <div class="detail-section-title" style="display:flex; justify-content:space-between; align-items:center">
+            <span>My Company Notes <span class="shared-tag">shared across {{ selectedJob.company }}</span></span>
+            <button class="collapse-toggle" @click="expanded.companyNotes = !expanded.companyNotes">
+              <span class="collapse-chevron" :class="{ open: expanded.companyNotes }">▸</span>{{ expanded.companyNotes ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <textarea v-show="expanded.companyNotes" v-model="companyData.notes" @blur="saveCompanyData" placeholder="What I think of this company, referrals, research…" style="width:100%; min-height:70px"></textarea>
         </div>
 
         <!-- Role Notes -->
         <div>
-          <div class="detail-section-title">Role Notes</div>
-          <textarea v-model="selectedJob.roleNotes" @blur="saveData" placeholder="Notes specific to this position…" style="width:100%; min-height:80px"></textarea>
+          <div class="detail-section-title" style="display:flex; justify-content:space-between; align-items:center">
+            <span>Role Notes</span>
+            <button class="collapse-toggle" @click="expanded.roleNotes = !expanded.roleNotes">
+              <span class="collapse-chevron" :class="{ open: expanded.roleNotes }">▸</span>{{ expanded.roleNotes ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <textarea v-show="expanded.roleNotes" v-model="selectedJob.roleNotes" @blur="saveData" placeholder="Notes specific to this position…" style="width:100%; min-height:80px"></textarea>
         </div>
 
         <!-- Key Contacts -->
@@ -560,6 +633,17 @@
         <div>
           <div class="detail-section-title">Questions to Ask Them</div>
           <textarea v-model="selectedJob.questions" @blur="saveData" placeholder="What does success look like in year one?…" style="width:100%; min-height:80px"></textarea>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div v-if="selectedJob.activity && selectedJob.activity.length">
+          <div class="detail-section-title">Activity</div>
+          <div class="timeline">
+            <div v-for="(a, idx) in [...selectedJob.activity].reverse()" :key="idx" class="timeline-item">
+              <div class="timeline-text">{{ a.text }}</div>
+              <div class="timeline-date">{{ formatDate(a.date) }}</div>
+            </div>
+          </div>
         </div>
 
         <hr class="divider" />
@@ -607,13 +691,26 @@
     <div class="modal" style="max-width:500px">
       <div class="modal-header"><div class="modal-title">⚙️ Settings</div><button class="close-btn" @click="showSettings = false">×</button></div>
       <div class="modal-body">
-        <div class="form-group"><label>OpenAI API Key</label><input type="text" v-model="settings.openaiKey" placeholder="sk-…" /><div class="hint">Used for AI job extraction and company snapshots. Stored in your browser only.</div></div>
+        <div class="form-group"><label>OpenAI API Key</label>
+          <div class="key-field">
+            <input :type="showKeys ? 'text' : 'password'" v-model="settings.openaiKey" placeholder="sk-…" />
+            <button class="key-eye" type="button" @click="showKeys = !showKeys">{{ showKeys ? '🙈' : '👁' }}</button>
+          </div>
+          <div class="hint">For AI extraction and company snapshots. Stored only in this browser — never on the public site.</div>
+        </div>
         <hr class="divider" />
-        <div class="form-group"><label>GitHub Personal Access Token</label><input type="text" v-model="settings.githubToken" placeholder="ghp_…" /><div class="hint">Must be created with the <strong>repo</strong> scope checked, or sync won't work.</div></div>
+        <div class="form-group"><label>GitHub Personal Access Token</label>
+          <div class="key-field">
+            <input :type="showKeys ? 'text' : 'password'" v-model="settings.githubToken" placeholder="ghp_…" />
+            <button class="key-eye" type="button" @click="showKeys = !showKeys">{{ showKeys ? '🙈' : '👁' }}</button>
+          </div>
+          <div class="hint">Must be created with the <strong>repo</strong> scope checked, or sync won't work.</div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label>GitHub Username</label><input type="text" v-model="settings.githubUser" placeholder="brwilliams88" /></div>
-          <div class="form-group"><label>GitHub Repo Name</label><input type="text" v-model="settings.githubRepo" placeholder="Job-Hunter" /></div>
+          <div class="form-group"><label>GitHub Repo Name</label><input type="text" v-model="settings.githubRepo" placeholder="job-hunter-data" /></div>
         </div>
+        <div class="hint" style="margin-top:-8px">🔒 For privacy, point this at a <strong>private</strong> repo (e.g. <code>job-hunter-data</code>) so your job notes aren't publicly readable. Your app code can stay in the public Pages repo.</div>
         <div class="form-group"><label>Token Expiry Date</label><input type="date" v-model="settings.tokenExpiry" /><div class="hint">We'll remind you a week before this date to refresh your token.</div></div>
         <div class="settings-info">💡 <strong>How sync works:</strong> Your data is saved to <code>jobs.json</code> in your GitHub repo. Any device with these settings reads and writes the same file — keeping everything in sync automatically.</div>
         <div class="hint" style="text-align:center">Job Hunter {{ appVersion }}</div>
@@ -635,7 +732,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v3';
+    const appVersion  = 'v4';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -659,12 +756,14 @@ createApp({
     const githubFileSha = ref('');
     const dismissedExpiry = ref(false);
     const pendingPush = ref(false);
+    const showKeys = ref(false);
+    const expanded = reactive({ profile: false, companyNotes: true, roleNotes: true });
     let lastPull = 0;
 
     const statuses = ['Watching','Applied','Interviewing','Offer','Accepted','Rejected'];
 
     const settings = reactive({
-      openaiKey: '', githubToken: '', githubUser: '', githubRepo: '', tokenExpiry: ''
+      openaiKey: '', githubToken: '', githubUser: '', githubRepo: '', tokenExpiry: '', urlMode: 'quick'
     });
 
     const form = reactive({
@@ -689,7 +788,25 @@ createApp({
       return { Watching:'badge-watching', Applied:'badge-applied', Interviewing:'badge-interviewing',
         Offer:'badge-offer', Accepted:'badge-accepted', Rejected:'badge-rejected' }[s] || 'badge-watching';
     }
+    const STATUS_COLORS = {
+      Watching:     ['rgba(143,144,111,0.22)', '#b8b89a'],
+      Applied:      ['rgba(245,121,46,0.20)',  '#f5924a'],
+      Interviewing: ['rgba(214,177,58,0.22)',  '#e7c558'],
+      Offer:        ['rgba(176,138,79,0.28)',  '#d6ad77'],
+      Accepted:     ['rgba(127,174,58,0.24)',  '#9fce5a'],
+      Rejected:     ['rgba(214,90,58,0.22)',   '#e88066']
+    };
+    function statusStyle(s) {
+      const c = STATUS_COLORS[s] || STATUS_COLORS.Watching;
+      return { backgroundColor: c[0], color: c[1] };
+    }
     function countByStatus(s) { return jobs.value.filter(j => j.status === s).length; }
+
+    // ── Activity log ──
+    function logActivity(job, text) {
+      if (!job.activity) job.activity = [];
+      job.activity.push({ date: today(), text });
+    }
 
     // ── Follow-ups ──
     function isFollowUpDue(job) {
@@ -745,22 +862,36 @@ createApp({
       showAddModal.value = true;
     }
     function saveJob() {
-      jobs.value.unshift({
+      const job = {
         id: uid(), company: form.company.trim(), title: form.title.trim(),
         location: form.location.trim(), workType: form.workType, salary: form.salary.trim(),
         status: form.status, url: form.url.trim(), appliedDate: form.appliedDate,
         updatedDate: today(), roleNotes: form.roleNotes.trim(),
-        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false
-      });
+        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, activity: []
+      };
+      logActivity(job, `Added · status: ${job.status}`);
+      jobs.value.unshift(job);
       showAddModal.value = false;
       saveData();
       showToast('✅ Job saved!');
     }
 
     // ── Detail ──
-    function openDetail(job) { selectedJob.value = job; }
+    function openDetail(job) {
+      selectedJob.value = job;
+      expanded.profile = false; expanded.companyNotes = true; expanded.roleNotes = true;
+    }
     function toggleStar(job) { job.starred = !job.starred; saveData(); }
-    function updateJobStatus() { selectedJob.value.updatedDate = today(); saveData(); }
+    function updateJobStatus() {
+      selectedJob.value.updatedDate = today();
+      logActivity(selectedJob.value, `Status → ${selectedJob.value.status}`);
+      saveData();
+    }
+    function onInlineStatus(job) {
+      job.updatedDate = today();
+      logActivity(job, `Status → ${job.status}`);
+      saveData();
+    }
     function deleteJob() {
       if (!confirm(`Delete ${selectedJob.value.company} – ${selectedJob.value.title}?`)) return;
       jobs.value = jobs.value.filter(j => j.id !== selectedJob.value.id);
@@ -789,10 +920,39 @@ createApp({
 
     function saveCompanyData() { saveData(); }
 
+    // ── Markdown → safe HTML (bold, links, bullets) ──
+    function mdToHtml(md) {
+      if (!md) return '';
+      // escape HTML first
+      let t = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // strip noisy tracking params on links
+      t = t.replace(/([?&])utm_source=openai/gi, '');
+      // links [text](url)
+      t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      // bold **text**
+      t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      // build lines into paragraphs / lists
+      const lines = t.split('\n');
+      let html = '', inList = false;
+      for (let line of lines) {
+        const m = line.match(/^\s*[-•*]\s+(.*)$/);
+        if (m) {
+          if (!inList) { html += '<ul>'; inList = true; }
+          html += `<li>${m[1]}</li>`;
+        } else {
+          if (inList) { html += '</ul>'; inList = false; }
+          if (line.trim()) html += `<p>${line.trim()}</p>`;
+        }
+      }
+      if (inList) html += '</ul>';
+      return html;
+    }
+
     // ── OpenAI helpers ──
     function stripJson(text) {
       return text.replace(/```json/gi,'').replace(/```/g,'').trim();
     }
+    function persistSettings() { localStorage.setItem('jh_settings', JSON.stringify({ ...settings })); }
     function applyExtracted(parsed) {
       if (parsed.company)  form.company  = parsed.company;
       if (parsed.title)    form.title    = parsed.title;
@@ -801,23 +961,38 @@ createApp({
       if (parsed.salary)   form.salary   = parsed.salary;
     }
 
+    // Parse plain job text via cheap gpt-4o-mini
+    async function parseJobText(text) {
+      const prompt = `Extract from this job posting and return ONLY valid JSON (no markdown):
+{"company":"","title":"","location":"","workType":"Remote | Hybrid | In-Office | (empty if unknown)","salary":""}
+For salary, assume USD — format like "$120k–$150k" and do NOT include the word USD or a currency code. Empty string if none listed.
+
+Job posting:
+${text.slice(0,6000)}`;
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
+        body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:prompt}], temperature:0 })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      return JSON.parse(stripJson(data.choices[0].message.content));
+    }
+
+    function stripHtml(html) {
+      let s = html.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+                  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+                  .replace(/<[^>]+>/g, ' ');
+      const ta = document.createElement('textarea');
+      ta.innerHTML = s;
+      return ta.value.replace(/\s+/g, ' ').trim();
+    }
+
     async function extractFromText() {
       if (!settings.openaiKey || !aiPasteText.value.trim()) return;
       aiLoading.value = true; aiMode.value = 'text';
       try {
-        const prompt = `Extract from this job posting and return ONLY valid JSON (no markdown):
-{"company":"","title":"","location":"","workType":"Remote | Hybrid | In-Office | (empty if unknown)","salary":""}
-
-Job posting:
-${aiPasteText.value.slice(0,5000)}`;
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
-          body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:prompt}], temperature:0 })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        applyExtracted(JSON.parse(stripJson(data.choices[0].message.content)));
+        applyExtracted(await parseJobText(aiPasteText.value));
         showToast('✨ Details extracted!');
       } catch(e) { showToast('⚠️ Extraction failed: ' + e.message, 4000); }
       aiLoading.value = false; aiMode.value = '';
@@ -837,25 +1012,39 @@ ${aiPasteText.value.slice(0,5000)}`;
 
     async function extractFromUrl() {
       if (!settings.openaiKey || !aiUrl.value.trim()) return;
+      const url = aiUrl.value.trim();
       aiLoading.value = true; aiMode.value = 'url';
       try {
-        if (form.url === '' || !form.url) form.url = aiUrl.value.trim();
-        const prompt = `Look up this job posting online: ${aiUrl.value.trim()}
+        if (!form.url) form.url = url;
+        if (settings.urlMode === 'quick') {
+          // Low-cost: fetch page via CORS proxy, then parse text with gpt-4o-mini
+          const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+          const r = await fetch(proxy);
+          const j = await r.json();
+          const text = stripHtml(j.contents || '');
+          if (text.length < 120) throw new Error('Page had no readable text (likely login-gated or JS-only)');
+          applyExtracted(await parseJobText(text));
+          showToast('⚡ Pulled via Quick Fetch!');
+        } else {
+          // Higher-cost: OpenAI web search
+          const prompt = `Look up this job posting online: ${url}
 Find the company name, job title, location, work type (Remote/Hybrid/In-Office), and salary range.
+For salary, assume USD — format like "$120k–$150k", no currency code.
 Return ONLY valid JSON (no markdown, no commentary):
 {"company":"","title":"","location":"","workType":"","salary":""}`;
-        const res = await fetch('https://api.openai.com/v1/responses', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
-          body: JSON.stringify({ model:'gpt-4o', tools:[{type:'web_search_preview'}], input: prompt })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        const txt = stripJson(responsesText(data));
-        applyExtracted(JSON.parse(txt));
-        showToast('🌐 Pulled from the web!');
+          const res = await fetch('https://api.openai.com/v1/responses', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
+            body: JSON.stringify({ model:'gpt-4o', tools:[{type:'web_search_preview'}], input: prompt })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          applyExtracted(JSON.parse(stripJson(responsesText(data))));
+          showToast('🌐 Pulled via Web Search!');
+        }
       } catch(e) {
-        showToast('⚠️ Could not read that URL — try pasting the text instead. (' + e.message + ')', 5000);
+        const tip = settings.urlMode === 'quick' ? ' Try switching to Web Search, or paste the text.' : ' Try pasting the text instead.';
+        showToast('⚠️ Could not read that URL.' + tip + ' (' + e.message + ')', 5500);
       }
       aiLoading.value = false; aiMode.value = '';
     }
@@ -900,7 +1089,7 @@ If unsure on a point, say so briefly.`;
     function githubApiUrl() {
       return `https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}/contents/jobs.json`;
     }
-    function payload() { return { jobs: jobs.value, companies }; }
+    function payload() { return { jobs: jobs.value, companies, meta: { tokenExpiry: settings.tokenExpiry } }; }
 
     async function pullFromGithub() {
       if (!settings.githubToken || !settings.githubUser || !settings.githubRepo) return;
@@ -916,6 +1105,10 @@ If unsure on a point, say so briefly.`;
           jobs.value = decoded.jobs || [];
           Object.keys(companies).forEach(k => delete companies[k]);
           Object.assign(companies, decoded.companies || {});
+          // Sync the (non-secret) token expiry date to new devices
+          if (decoded.meta && decoded.meta.tokenExpiry && !settings.tokenExpiry) {
+            settings.tokenExpiry = decoded.meta.tokenExpiry; persistSettings();
+          }
         }
         syncState.value = 'ok'; updateBadge();
         showToast('🔄 Data pulled from GitHub');
@@ -975,9 +1168,10 @@ If unsure on a point, say so briefly.`;
       pushToGithub();
     }
     function loadSettings() { const s = localStorage.getItem('jh_settings'); if (s) Object.assign(settings, JSON.parse(s)); }
-    function saveSettings() {
-      localStorage.setItem('jh_settings', JSON.stringify({ ...settings }));
-      showSettings.value = false; showToast('✅ Settings saved'); pullFromGithub();
+    async function saveSettings() {
+      persistSettings();
+      showSettings.value = false; showToast('✅ Settings saved');
+      if (settings.githubToken) { await pullFromGithub(); pushToGithub(); }  // propagate expiry date
     }
 
     // ── Init ──
@@ -1003,6 +1197,7 @@ If unsure on a point, say so briefly.`;
       selectedJob, searchQuery, filterStatus, filterWorkType, filterStarred, sortKey, sortDir, filteredJobs,
       aiUrl, aiPasteText, aiLoading, aiMode, snapshotLoading, syncState, toast, settings,
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
+      showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
       openAddModal, saveJob, openDetail, toggleStar, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
