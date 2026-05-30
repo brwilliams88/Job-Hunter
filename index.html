@@ -123,7 +123,8 @@
 
     /* ── Toolbar ── */
     .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .filter-group { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
     .search-wrap input[type="text"] {
       width: 100%; padding: 8px 12px 8px 38px;
       background: var(--surface); border: 1px solid var(--border);
@@ -221,9 +222,22 @@
     /* ── Detail Panel ── */
     .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 28px; }
     .detail-panel { background: var(--surface); width: 100%; max-width: 720px; max-height: 86vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
-    .detail-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: sticky; top: 0; background: var(--surface); z-index: 10; }
-    .detail-company { font-size: 18px; font-weight: 700; }
-    .detail-title { color: var(--muted); font-size: 13px; margin-top: 3px; }
+    .detail-header {
+      padding: 18px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+      position: sticky; top: 0; z-index: 10;
+      background-color: #232b15;
+      background-image:
+        radial-gradient(ellipse 64px 48px at 34px 38px,  rgba(120,138,60,0.50), transparent 68%),
+        radial-gradient(ellipse 80px 56px at 150px 24px, rgba(38,46,18,0.80),   transparent 68%),
+        radial-gradient(ellipse 58px 44px at 104px 134px,rgba(104,120,52,0.45), transparent 68%),
+        radial-gradient(ellipse 72px 54px at 232px 112px,rgba(30,38,14,0.80),   transparent 68%),
+        radial-gradient(ellipse 54px 42px at 24px 150px, rgba(92,108,46,0.42),  transparent 68%),
+        radial-gradient(ellipse 46px 36px at 190px 150px,rgba(64,76,30,0.65),   transparent 68%);
+      background-size: 260px 180px; background-repeat: repeat;
+    }
+    .detail-company { font-size: 18px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
+    .detail-title { color: #d7d2bf; font-size: 13px; margin-top: 3px; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
     .detail-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 22px; }
     .detail-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 10px; }
     .detail-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -258,11 +272,12 @@
     .timeline-del { position: absolute; right: 0; top: 4px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; opacity: 0; transition: opacity 0.1s; padding: 2px 4px; }
     .timeline-item:hover .timeline-del { opacity: 1; }
     .timeline-del:hover { color: var(--red); }
-    /* Referral chip */
-    .chip-referral { font-size: 11px; padding: 3px 10px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); background: transparent; user-select: none; white-space: nowrap; }
-    .chip-referral:hover { border-color: var(--muted); color: var(--text); }
-    .chip-referral.on { background: rgba(127,174,58,0.22); color: var(--green); border-color: transparent; }
+    /* Referral indicators */
+    .ref-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(127,174,58,0.22); color: var(--green); white-space: nowrap; }
     .ref-mini { font-size: 10px; color: var(--green); background: rgba(127,174,58,0.18); padding: 1px 7px; border-radius: 10px; margin-top: 4px; display: inline-block; }
+    /* Checkbox row */
+    .check-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); text-transform: none; letter-spacing: 0; font-weight: 400; cursor: pointer; margin-top: 4px; }
+    .check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
     /* Open-posting link in table row */
     .row-link { color: var(--muted); display: inline-flex; align-items: center; opacity: 0.6; }
     .row-link:hover { color: var(--accent); opacity: 1; }
@@ -397,17 +412,19 @@
         </span>
         <input type="text" v-model="searchQuery" placeholder="Search company, title, location…" />
       </div>
-      <select v-model="filterStatus">
-        <option value="">All Statuses</option>
-        <option v-for="s in statuses" :key="s">{{ s }}</option>
-      </select>
-      <select v-model="filterWorkType">
-        <option value="">All Work Types</option>
-        <option>Remote</option>
-        <option>Hybrid</option>
-        <option>In-Office</option>
-      </select>
-      <button class="btn btn-sm" :class="filterStarred ? 'btn-primary' : 'btn-ghost'" @click="filterStarred = !filterStarred">★ Starred</button>
+      <div class="filter-group">
+        <select v-model="filterStatus">
+          <option value="">All Statuses</option>
+          <option v-for="s in statuses" :key="s">{{ s }}</option>
+        </select>
+        <select v-model="filterWorkType">
+          <option value="">All Work Types</option>
+          <option>Remote</option>
+          <option>Hybrid</option>
+          <option>In-Office</option>
+        </select>
+        <button class="btn btn-sm" :class="filterStarred ? 'btn-primary' : 'btn-ghost'" @click="filterStarred = !filterStarred">★ Starred</button>
+      </div>
     </div>
 
     <!-- Table -->
@@ -415,8 +432,8 @@
       <table>
         <thead>
           <tr>
-            <th @click="setSort('company')" :class="{'active-sort': sortKey==='company'}">Company <span class="sort-indicator">{{ sortArrow('company') }}</span></th>
             <th @click="setSort('title')" :class="{'active-sort': sortKey==='title'}">Job Title <span class="sort-indicator">{{ sortArrow('title') }}</span></th>
+            <th @click="setSort('company')" :class="{'active-sort': sortKey==='company'}">Company <span class="sort-indicator">{{ sortArrow('company') }}</span></th>
             <th class="hide-mobile" @click="setSort('location')" :class="{'active-sort': sortKey==='location'}">Location <span class="sort-indicator">{{ sortArrow('location') }}</span></th>
             <th class="hide-mobile" @click="setSort('workType')" :class="{'active-sort': sortKey==='workType'}">Work Type <span class="sort-indicator">{{ sortArrow('workType') }}</span></th>
             <th class="hide-mobile" @click="setSort('salary')" :class="{'active-sort': sortKey==='salary'}">Salary <span class="sort-indicator">{{ sortArrow('salary') }}</span></th>
@@ -440,20 +457,18 @@
               <div style="display:flex; align-items:flex-start; gap:8px">
                 <span class="star-toggle" :class="{ starred: job.starred }" @click.stop="toggleStar(job)">{{ job.starred ? '★' : '☆' }}</span>
                 <div>
-                  <div class="company-name">{{ job.company }}</div>
+                  <div style="display:flex; align-items:center; gap:7px">
+                    <span class="company-name">{{ job.title }}</span>
+                    <a v-if="job.url" :href="job.url" target="_blank" class="row-link" @click.stop title="Open job posting">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
                   <div v-if="job.referral" class="ref-mini">🤝 Referral</div>
                   <div v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</div>
                 </div>
               </div>
             </td>
-            <td>
-              <div style="display:flex; align-items:center; gap:7px">
-                <span>{{ job.title }}</span>
-                <a v-if="job.url" :href="job.url" target="_blank" class="row-link" @click.stop title="Open job posting">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                </a>
-              </div>
-            </td>
+            <td class="location-text">{{ job.company }}</td>
             <td class="hide-mobile location-text">{{ job.location }}</td>
             <td class="hide-mobile"><span class="tag-work-type" v-if="job.workType">{{ job.workType }}</span></td>
             <td class="hide-mobile salary-text">{{ job.salary || '—' }}</td>
@@ -527,6 +542,7 @@
           <div class="form-group"><label>Date Applied</label><input type="date" v-model="form.appliedDate" /></div>
         </div>
         <div class="form-group"><label>Role Notes</label><textarea v-model="form.roleNotes" placeholder="Why I'm excited about this role…"></textarea></div>
+        <label class="check-row"><input type="checkbox" v-model="form.referral" /> I have a referral for this role</label>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" @click="showAddModal = false">Cancel</button>
@@ -542,13 +558,13 @@
         <div>
           <div class="detail-company">
             <span class="star-toggle" :class="{ starred: selectedJob.starred }" @click="toggleStar(selectedJob)">{{ selectedJob.starred ? '★' : '☆' }}</span>
-            {{ selectedJob.company }}
+            {{ selectedJob.title }}
           </div>
-          <div class="detail-title">{{ selectedJob.title }}</div>
+          <div class="detail-title">{{ selectedJob.company }}</div>
           <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center">
             <span class="badge" :class="badgeClass(selectedJob.status)">{{ selectedJob.status }}</span>
             <span class="tag-work-type" v-if="selectedJob.workType">{{ selectedJob.workType }}</span>
-            <span class="chip-referral" :class="{ on: selectedJob.referral }" @click="toggleReferral(selectedJob)">🤝 Referral</span>
+            <span v-if="selectedJob.referral" class="ref-pill">🤝 Referral</span>
             <span v-if="isFollowUpDue(selectedJob)" class="followup-flag">🔔 Follow up due</span>
           </div>
         </div>
@@ -583,6 +599,9 @@
             </div>
           </div>
           <div class="hint">Set a follow-up date and it appears in "Follow-ups Due" + the app badge when it's reached. Leave blank for no reminder.</div>
+          <label class="check-row">
+            <input type="checkbox" v-model="selectedJob.referral" @change="saveData" /> I have a referral for this role
+          </label>
         </div>
 
         <!-- Company Profile (shared) -->
@@ -767,7 +786,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v6';
+    const appVersion  = 'v7';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -803,7 +822,7 @@ createApp({
 
     const form = reactive({
       company:'', title:'', location:'', workType:'', salary:'',
-      status:'Applied', url:'', appliedDate: today(), roleNotes:''
+      status:'Applied', url:'', appliedDate: today(), roleNotes:'', referral: false
     });
     const interviewForm = reactive({ round:'Phone Screen', date: today(), who:'', notes:'' });
     const contactForm   = reactive({ name:'', role:'', contact:'', notes:'' });
@@ -836,6 +855,22 @@ createApp({
       return { backgroundColor: c[0], color: c[1] };
     }
     function countByStatus(s) { return jobs.value.filter(j => j.status === s).length; }
+    // Parse a salary string to its highest number (so ranges sort by the top end)
+    function salaryValue(s) {
+      if (!s) return 0;
+      const tokens = s.match(/[\d,.]+\s*[kKmM]?/g) || [];
+      let max = 0;
+      for (const t of tokens) {
+        const m = t.match(/([\d,.]+)\s*([kKmM]?)/);
+        if (!m) continue;
+        let n = parseFloat(m[1].replace(/,/g,''));
+        if (isNaN(n)) continue;
+        const suf = m[2].toLowerCase();
+        if (suf === 'k') n *= 1e3; else if (suf === 'm') n *= 1e6;
+        if (n > max) max = n;
+      }
+      return max;
+    }
 
     // ── Activity log ──
     function logActivity(job, text) {
@@ -890,14 +925,16 @@ createApp({
         return matchQ && matchS && matchW && matchStar;
       });
       return [...list].sort((a,b) => {
-        const av = a[sortKey.value] || '', bv = b[sortKey.value] || '';
+        let av, bv;
+        if (sortKey.value === 'salary') { av = salaryValue(a.salary); bv = salaryValue(b.salary); }
+        else { av = a[sortKey.value] || ''; bv = b[sortKey.value] || ''; }
         return av < bv ? -sortDir.value : av > bv ? sortDir.value : 0;
       });
     });
 
     // ── Add / Save Job ──
     function openAddModal() {
-      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'Applied', url:'', appliedDate: today(), roleNotes:'' });
+      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'Applied', url:'', appliedDate: today(), roleNotes:'', referral: false });
       aiUrl.value = ''; aiPasteText.value = '';
       showAddModal.value = true;
     }
@@ -907,7 +944,7 @@ createApp({
         location: form.location.trim(), workType: form.workType, salary: form.salary.trim(),
         status: form.status, url: form.url.trim(), appliedDate: form.appliedDate,
         updatedDate: today(), roleNotes: form.roleNotes.trim(),
-        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, referral: false, activity: []
+        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false, referral: form.referral, activity: []
       };
       logActivity(job, `Added · status: ${job.status}`);
       jobs.value.unshift(job);
@@ -922,7 +959,6 @@ createApp({
       expanded.profile = false; expanded.companyNotes = true; expanded.roleNotes = true;
     }
     function toggleStar(job) { job.starred = !job.starred; saveData(); }
-    function toggleReferral(job) { job.referral = !job.referral; saveData(); }
     function deleteActivity(idx) { selectedJob.value.activity.splice(idx, 1); saveData(); }
     function updateJobStatus() {
       selectedJob.value.updatedDate = today();
@@ -1243,7 +1279,7 @@ If unsure on a point, say so briefly.`;
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
-      openAddModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob,
+      openAddModal, saveJob, openDetail, toggleStar, deleteActivity, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, saveContact, deleteContact, saveCompanyData,
       extractFromText, extractFromUrl, fetchSnapshot, exportJson,
