@@ -6,30 +6,33 @@
   <title>Job Hunter</title>
   <link rel="icon" type="image/png" href="appicon.png" />
   <link rel="apple-touch-icon" href="appicon.png" />
+  <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Job Hunter" />
-  <meta name="theme-color" content="#0f1117" />
+  <meta name="theme-color" content="#12140c" />
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <style>
     /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --surface2:  #22263a;
-      --border:    #2e3250;
-      --accent:    #4f7cff;
-      --accent2:   #7c5cff;
-      --text:      #e8eaf6;
-      --muted:     #7b80a0;
-      --green:     #3ecf8e;
-      --yellow:    #f5c842;
+      /* Camo / tactical palette */
+      --bg:        #12140c;
+      --surface:   #1c1f14;
+      --surface2:  #262a1a;
+      --border:    #3a3f28;
+      --accent:    #f5792e;   /* burnt orange (matches icon) */
+      --accent2:   #e8722e;
+      --text:      #ece8d8;
+      --muted:     #8f906f;
+      --green:     #7fae3a;
+      --olive:     #6b7a3a;
+      --yellow:    #d6b13a;
       --orange:    #f5924a;
-      --red:       #f55a5a;
-      --purple:    #b57bff;
+      --red:       #d65a3a;
+      --purple:    #b08a4f;
       --radius:    10px;
-      --shadow:    0 4px 24px rgba(0,0,0,0.4);
+      --shadow:    0 4px 24px rgba(0,0,0,0.55);
     }
 
     body {
@@ -40,26 +43,25 @@
       font-size: 14px;
     }
 
-    /* ── Layout ── */
+    /* Subtle camo blobs behind the header */
     .app-header {
-      background: var(--surface);
+      position: sticky; top: 0; z-index: 100;
+      background:
+        radial-gradient(circle at 12% 40%, rgba(107,122,58,0.22) 0 60px, transparent 61px),
+        radial-gradient(circle at 30% 80%, rgba(60,70,30,0.30) 0 50px, transparent 51px),
+        radial-gradient(circle at 55% 20%, rgba(90,100,45,0.18) 0 70px, transparent 71px),
+        radial-gradient(circle at 78% 70%, rgba(50,58,26,0.28) 0 55px, transparent 56px),
+        var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-icon { font-size: 22px; }
-    .logo-img { width: 30px; height: 30px; border-radius: 7px; }
+    .logo-img { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
     .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
     .logo-text span { color: var(--accent); }
 
     .header-actions { display: flex; gap: 8px; align-items: center; }
-
     .main { padding: 20px; max-width: 1400px; margin: 0 auto; }
 
     /* ── Buttons ── */
@@ -69,215 +71,156 @@
       font-size: 13px; font-weight: 600; cursor: pointer;
       border: none; transition: all 0.15s; white-space: nowrap;
     }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: #3d6ae0; }
+    .btn-primary { background: var(--accent); color: #1a1206; }
+    .btn-primary:hover { background: var(--accent2); }
     .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover { background: var(--border); }
     .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
     .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
     .btn-danger { background: var(--red); color: #fff; }
-    .btn-danger:hover { background: #d94444; }
+    .btn-danger:hover { background: #c04a2e; }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
-    .btn-icon { padding: 7px; border-radius: 8px; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Banners ── */
+    .banner {
+      border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      font-size: 13px; line-height: 1.5;
+    }
+    .banner-warn { background: rgba(214,90,58,0.15); border: 1px solid var(--red); color: #f0b9a8; }
+    .banner-info { background: rgba(245,146,74,0.12); border: 1px solid var(--orange); color: #f3cda6; }
+
+    /* ── Follow-ups due ── */
+    .followup-box {
+      background: rgba(245,146,74,0.10); border: 1px solid var(--orange);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
+    }
+    .followup-box h3 { font-size: 13px; color: var(--orange); margin-bottom: 8px; }
+    .followup-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 0; font-size: 13px; cursor: pointer; border-top: 1px solid rgba(245,146,74,0.2);
+    }
+    .followup-item:first-of-type { border-top: none; }
+    .followup-item:hover { color: var(--accent); }
 
     /* ── Stats ── */
     .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px; margin-bottom: 20px;
     }
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      text-align: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; text-align: center;
     }
     .stat-number { font-size: 26px; font-weight: 700; line-height: 1; }
     .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* ── Toolbar ── */
-    .toolbar {
-      display: flex; gap: 10px; margin-bottom: 16px;
-      flex-wrap: wrap; align-items: center;
-    }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .search-wrap { position: relative; flex: 1; min-width: 200px; }
     .search-wrap input {
       width: 100%; padding: 8px 12px 8px 34px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); color: var(--text); font-size: 13px;
     }
-    .search-icon {
-      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-      color: var(--muted); font-size: 15px; pointer-events: none;
-    }
-    select {
-      padding: 8px 12px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: var(--radius);
-      color: var(--text); font-size: 13px; cursor: pointer;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none; border-color: var(--accent);
-    }
+    .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+    select { padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; cursor: pointer; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
     /* ── Table ── */
     .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; }
     thead { background: var(--surface2); }
     th {
-      padding: 11px 14px; text-align: left;
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
-      color: var(--muted); white-space: nowrap; cursor: pointer;
-      user-select: none;
+      padding: 11px 14px; text-align: left; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted);
+      white-space: nowrap; cursor: pointer; user-select: none;
     }
     th:hover { color: var(--text); }
     th .sort-indicator { margin-left: 4px; opacity: 0.5; }
     th.active-sort { color: var(--accent); }
     th.active-sort .sort-indicator { opacity: 1; }
-    td {
-      padding: 11px 14px; border-top: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    tr:hover td { background: rgba(79,124,255,0.04); cursor: pointer; }
+    td { padding: 11px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: rgba(245,121,46,0.05); cursor: pointer; }
     .company-name { font-weight: 600; }
-    .job-title { color: var(--muted); font-size: 12px; margin-top: 2px; }
     .location-text { font-size: 12px; color: var(--muted); }
     .salary-text { font-size: 12px; white-space: nowrap; }
     .date-text { font-size: 12px; color: var(--muted); white-space: nowrap; }
-    .empty-state {
-      text-align: center; padding: 60px 20px; color: var(--muted);
-    }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
     .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
     .empty-state p { margin-top: 6px; font-size: 13px; }
 
     /* ── Status Badge ── */
-    .badge {
-      display: inline-block; padding: 3px 9px;
-      border-radius: 20px; font-size: 11px; font-weight: 600;
-      white-space: nowrap;
-    }
-    .badge-watching   { background: rgba(123,128,160,0.2); color: var(--muted); }
-    .badge-applied    { background: rgba(79,124,255,0.2);  color: var(--accent); }
-    .badge-interviewing { background: rgba(245,200,66,0.2); color: var(--yellow); }
-    .badge-offer      { background: rgba(181,123,255,0.2); color: var(--purple); }
-    .badge-accepted   { background: rgba(62,207,142,0.2);  color: var(--green); }
-    .badge-rejected   { background: rgba(245,90,90,0.2);   color: var(--red); }
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .badge-watching   { background: rgba(143,144,111,0.2); color: var(--muted); }
+    .badge-applied    { background: rgba(245,121,46,0.18); color: var(--accent); }
+    .badge-interviewing { background: rgba(214,177,58,0.2); color: var(--yellow); }
+    .badge-offer      { background: rgba(176,138,79,0.25); color: var(--purple); }
+    .badge-accepted   { background: rgba(127,174,58,0.22); color: var(--green); }
+    .badge-rejected   { background: rgba(214,90,58,0.2);  color: var(--red); }
 
-    /* Follow-up flag */
     .followup-flag {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 11px; color: var(--orange);
-      background: rgba(245,146,74,0.15);
+      display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+      color: var(--orange); background: rgba(245,146,74,0.15);
       padding: 2px 7px; border-radius: 20px; margin-top: 4px;
     }
 
     /* ── Modal ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-      display: flex; align-items: flex-start; justify-content: center;
-      z-index: 200; padding: 20px; overflow-y: auto;
-    }
-    .modal {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; width: 100%; max-width: 680px;
-      box-shadow: var(--shadow); margin: auto;
-    }
-    .modal-header {
-      padding: 18px 22px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: flex-start; justify-content: center; z-index: 200; padding: 20px; overflow-y: auto; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 680px; box-shadow: var(--shadow); margin: auto; }
+    .modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
     .modal-title { font-size: 16px; font-weight: 700; }
     .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
-    .modal-footer {
-      padding: 16px 22px; border-top: 1px solid var(--border);
-      display: flex; gap: 10px; justify-content: flex-end;
-    }
+    .modal-footer { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 
     /* ── Form ── */
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
     input[type="text"], input[type="url"], input[type="date"], textarea, select {
-      width: 100%; padding: 9px 12px;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: 13px;
-      font-family: inherit;
+      width: 100%; padding: 9px 12px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+      font-size: 13px; font-family: inherit;
     }
     textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-    .ai-paste-area { min-height: 120px; }
-
+    .ai-paste-area { min-height: 110px; }
     .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
     /* ── Detail Panel ── */
-    .detail-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-      display: flex; justify-content: flex-end;
-      z-index: 200;
-    }
-    .detail-panel {
-      background: var(--surface); width: 100%; max-width: 520px;
-      height: 100%; overflow-y: auto;
-      border-left: 1px solid var(--border);
-      display: flex; flex-direction: column;
-    }
-    .detail-header {
-      padding: 18px 20px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: flex-start; justify-content: space-between;
-      gap: 12px; position: sticky; top: 0;
-      background: var(--surface); z-index: 10;
-    }
+    .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; justify-content: flex-end; z-index: 200; }
+    .detail-panel { background: var(--surface); width: 100%; max-width: 540px; height: 100%; overflow-y: auto; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+    .detail-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: sticky; top: 0; background: var(--surface); z-index: 10; }
     .detail-company { font-size: 18px; font-weight: 700; }
     .detail-title { color: var(--muted); font-size: 13px; margin-top: 3px; }
-    .detail-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
-    .detail-section-title {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.6px; color: var(--muted); margin-bottom: 10px;
-    }
+    .detail-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 22px; }
+    .detail-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 10px; }
     .detail-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .meta-item label { display: block; }
     .meta-item .meta-value { font-size: 13px; margin-top: 2px; }
 
-    .status-select-row { display: flex; align-items: center; gap: 10px; }
-
-    .company-snapshot {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6;
-      color: var(--text); white-space: pre-wrap;
-    }
+    .company-snapshot { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
     .snapshot-loading { color: var(--muted); font-style: italic; }
 
-    .interview-entry {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 12px; margin-bottom: 8px;
-    }
-    .interview-entry-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 6px;
-    }
+    .interview-entry, .contact-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .interview-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .interview-round { font-weight: 600; font-size: 13px; }
     .interview-date { font-size: 11px; color: var(--muted); }
     .interview-notes { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
     .interview-who { font-size: 11px; color: var(--accent); margin-top: 3px; }
+    .contact-name { font-weight: 600; font-size: 13px; }
+    .contact-role { font-size: 12px; color: var(--muted); }
+    .contact-detail { font-size: 12px; color: var(--accent); margin-top: 2px; }
+    .shared-tag { font-size: 10px; color: var(--olive); background: rgba(107,122,58,0.2); padding: 2px 6px; border-radius: 10px; margin-left: 6px; text-transform: none; letter-spacing: 0; }
 
-    /* ── Settings Modal ── */
-    .settings-info {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 12px; font-size: 12px; line-height: 1.6; color: var(--muted);
-    }
-
-    /* ── Sync indicator ── */
-    .sync-status {
-      font-size: 11px; display: flex; align-items: center; gap: 5px;
-    }
+    .settings-info { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 12px; line-height: 1.6; color: var(--muted); }
+    .sync-status { font-size: 11px; display: flex; align-items: center; gap: 5px; }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .sync-ok   { background: var(--green); }
-    .sync-err  { background: var(--red); }
+    .sync-ok { background: var(--green); }
+    .sync-err { background: var(--red); }
     .sync-busy { background: var(--yellow); animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
 
-    /* ── Responsive ── */
     @media (max-width: 640px) {
       .main { padding: 12px; }
       .form-row { grid-template-columns: 1fr; }
@@ -286,27 +229,13 @@
       .stats-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
-    /* ── Misc ── */
-    .close-btn {
-      background: none; border: none; color: var(--muted);
-      font-size: 20px; cursor: pointer; padding: 2px 6px;
-      border-radius: 6px; line-height: 1;
-    }
+    .close-btn { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 2px 6px; border-radius: 6px; line-height: 1; }
     .close-btn:hover { color: var(--text); background: var(--surface2); }
     .divider { border: none; border-top: 1px solid var(--border); }
-    .tag-work-type {
-      font-size: 11px; padding: 2px 7px; border-radius: 20px;
-      background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
-    }
+    .tag-work-type { font-size: 11px; padding: 2px 7px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
     .spinning { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .toast {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 10px 18px; font-size: 13px;
-      z-index: 999; box-shadow: var(--shadow);
-      animation: fadeInUp 0.2s ease;
-    }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; font-size: 13px; z-index: 999; box-shadow: var(--shadow); animation: fadeInUp 0.2s ease; max-width: 90%; text-align: center; }
     @keyframes fadeInUp { from { opacity:0; transform: translateX(-50%) translateY(10px); } }
   </style>
 </head>
@@ -324,7 +253,7 @@
         <div class="sync-dot" :class="syncState === 'ok' ? 'sync-ok' : syncState === 'busy' ? 'sync-busy' : 'sync-err'"></div>
         <span class="hide-mobile">{{ syncState === 'ok' ? 'Synced' : syncState === 'busy' ? 'Saving…' : 'Sync error' }}</span>
       </div>
-      <button class="btn btn-secondary btn-sm" @click="showSettings = true">⚙️ Settings</button>
+      <button class="btn btn-secondary btn-sm" @click="showSettings = true">⚙️</button>
       <button class="btn btn-primary" @click="openAddModal">+ Add Job</button>
     </div>
   </header>
@@ -332,11 +261,33 @@
   <!-- ── MAIN ── -->
   <main class="main">
 
+    <!-- Token expiry reminder -->
+    <div class="banner banner-warn" v-if="tokenExpiringSoon && !dismissedExpiry">
+      <span>⏳ <strong>GitHub sync token expires {{ formatDate(settings.tokenExpiry) }}.</strong>
+        Generate a new token (with the <code>repo</code> scope checked) on GitHub, then paste it in ⚙️ Settings to keep your devices in sync.</span>
+      <button class="close-btn" @click="dismissedExpiry = true">×</button>
+    </div>
+
+    <!-- Setup nudge -->
+    <div class="banner banner-info" v-if="!settings.githubToken">
+      <span>👋 <strong>Sync isn't set up yet.</strong> Open ⚙️ Settings and add your GitHub token (with <code>repo</code> scope) so your data is saved across devices.</span>
+      <button class="btn btn-ghost btn-sm" @click="showSettings = true">Set up</button>
+    </div>
+
+    <!-- Follow-ups Due -->
+    <div class="followup-box" v-if="followUpsDue.length">
+      <h3>🔔 Follow-ups Due ({{ followUpsDue.length }})</h3>
+      <div v-for="job in followUpsDue" :key="job.id" class="followup-item" @click="openDetail(job)">
+        <span><strong>{{ job.company }}</strong> — {{ job.title }}</span>
+        <span class="date-text">due {{ formatDate(job.followUpDate) }}</span>
+      </div>
+    </div>
+
     <!-- Stats -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">{{ jobs.length }}</div>
-        <div class="stat-label">Total</div>
+        <div class="stat-label">All Jobs</div>
       </div>
       <div class="stat-card">
         <div class="stat-number" style="color:var(--accent)">{{ countByStatus('Applied') }}</div>
@@ -376,6 +327,7 @@
         <option>Hybrid</option>
         <option>In-Office</option>
       </select>
+      <button class="btn btn-ghost btn-sm" @click="exportJson">⬇ Export</button>
     </div>
 
     <!-- Table -->
@@ -383,27 +335,13 @@
       <table>
         <thead>
           <tr>
-            <th @click="setSort('company')" :class="{'active-sort': sortKey==='company'}">
-              Company <span class="sort-indicator">{{ sortArrow('company') }}</span>
-            </th>
-            <th @click="setSort('title')" :class="{'active-sort': sortKey==='title'}">
-              Job Title <span class="sort-indicator">{{ sortArrow('title') }}</span>
-            </th>
-            <th class="hide-mobile" @click="setSort('location')" :class="{'active-sort': sortKey==='location'}">
-              Location <span class="sort-indicator">{{ sortArrow('location') }}</span>
-            </th>
-            <th class="hide-mobile" @click="setSort('workType')" :class="{'active-sort': sortKey==='workType'}">
-              Work Type <span class="sort-indicator">{{ sortArrow('workType') }}</span>
-            </th>
-            <th class="hide-mobile" @click="setSort('salary')" :class="{'active-sort': sortKey==='salary'}">
-              Salary <span class="sort-indicator">{{ sortArrow('salary') }}</span>
-            </th>
-            <th @click="setSort('status')" :class="{'active-sort': sortKey==='status'}">
-              Status <span class="sort-indicator">{{ sortArrow('status') }}</span>
-            </th>
-            <th class="hide-mobile" @click="setSort('appliedDate')" :class="{'active-sort': sortKey==='appliedDate'}">
-              Applied <span class="sort-indicator">{{ sortArrow('appliedDate') }}</span>
-            </th>
+            <th @click="setSort('company')" :class="{'active-sort': sortKey==='company'}">Company <span class="sort-indicator">{{ sortArrow('company') }}</span></th>
+            <th @click="setSort('title')" :class="{'active-sort': sortKey==='title'}">Job Title <span class="sort-indicator">{{ sortArrow('title') }}</span></th>
+            <th class="hide-mobile" @click="setSort('location')" :class="{'active-sort': sortKey==='location'}">Location <span class="sort-indicator">{{ sortArrow('location') }}</span></th>
+            <th class="hide-mobile" @click="setSort('workType')" :class="{'active-sort': sortKey==='workType'}">Work Type <span class="sort-indicator">{{ sortArrow('workType') }}</span></th>
+            <th class="hide-mobile" @click="setSort('salary')" :class="{'active-sort': sortKey==='salary'}">Salary <span class="sort-indicator">{{ sortArrow('salary') }}</span></th>
+            <th @click="setSort('status')" :class="{'active-sort': sortKey==='status'}">Status <span class="sort-indicator">{{ sortArrow('status') }}</span></th>
+            <th class="hide-mobile" @click="setSort('appliedDate')" :class="{'active-sort': sortKey==='appliedDate'}">Applied <span class="sort-indicator">{{ sortArrow('appliedDate') }}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -419,15 +357,11 @@
           <tr v-for="job in filteredJobs" :key="job.id" @click="openDetail(job)">
             <td>
               <div class="company-name">{{ job.company }}</div>
-              <div v-if="needsFollowUp(job)" class="followup-flag">⚠️ Follow up?</div>
+              <div v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</div>
             </td>
-            <td>
-              <div>{{ job.title }}</div>
-            </td>
+            <td><div>{{ job.title }}</div></td>
             <td class="hide-mobile location-text">{{ job.location }}</td>
-            <td class="hide-mobile">
-              <span class="tag-work-type" v-if="job.workType">{{ job.workType }}</span>
-            </td>
+            <td class="hide-mobile"><span class="tag-work-type" v-if="job.workType">{{ job.workType }}</span></td>
             <td class="hide-mobile salary-text">{{ job.salary || '—' }}</td>
             <td><span class="badge" :class="badgeClass(job.status)">{{ job.status }}</span></td>
             <td class="hide-mobile date-text">{{ formatDate(job.appliedDate) }}</td>
@@ -446,75 +380,47 @@
       </div>
       <div class="modal-body">
 
-        <!-- AI Parse -->
-        <div class="form-group" v-if="settings.openaiKey">
-          <label>Paste Job Description (AI will extract details)</label>
-          <textarea class="ai-paste-area" v-model="aiPasteText"
-            placeholder="Paste the full job posting text here, then click Extract…"></textarea>
-          <div style="display:flex; gap:8px; align-items:center">
-            <button class="btn btn-secondary btn-sm" @click="extractJobInfo" :disabled="aiLoading || !aiPasteText.trim()">
-              <span v-if="aiLoading" class="spinning">⟳</span>
-              <span v-else>✨</span>
-              {{ aiLoading ? 'Extracting…' : 'Extract with AI' }}
-            </button>
-            <span class="hint">or fill in the form below manually</span>
-          </div>
+        <!-- AI helpers -->
+        <div v-if="settings.openaiKey" class="form-group">
+          <label>Quick fill with AI</label>
+          <input type="url" v-model="aiUrl" placeholder="Paste a job posting URL (LinkedIn, company site…)" />
+          <button class="btn btn-secondary btn-sm" @click="extractFromUrl" :disabled="aiLoading || !aiUrl.trim()" style="align-self:flex-start; margin-top:4px">
+            <span v-if="aiLoading && aiMode==='url'" class="spinning">⟳</span><span v-else>🌐</span>
+            {{ aiLoading && aiMode==='url' ? 'Searching the web…' : 'Fetch from URL' }}
+          </button>
+          <div class="hint">Uses AI web search — works best on public pages. If it can't read the page, paste the text below instead.</div>
+
+          <label style="margin-top:10px">…or paste the job description</label>
+          <textarea class="ai-paste-area" v-model="aiPasteText" placeholder="Paste the full job posting text here, then click Extract…"></textarea>
+          <button class="btn btn-secondary btn-sm" @click="extractFromText" :disabled="aiLoading || !aiPasteText.trim()" style="align-self:flex-start">
+            <span v-if="aiLoading && aiMode==='text'" class="spinning">⟳</span><span v-else>✨</span>
+            {{ aiLoading && aiMode==='text' ? 'Extracting…' : 'Extract from text' }}
+          </button>
         </div>
 
         <hr class="divider" v-if="settings.openaiKey" />
 
-        <!-- Manual Fields -->
         <div class="form-row">
-          <div class="form-group">
-            <label>Company *</label>
-            <input type="text" v-model="form.company" placeholder="Acme Corp" />
-          </div>
-          <div class="form-group">
-            <label>Job Title *</label>
-            <input type="text" v-model="form.title" placeholder="Senior Product Manager" />
-          </div>
+          <div class="form-group"><label>Company *</label><input type="text" v-model="form.company" placeholder="Acme Corp" /></div>
+          <div class="form-group"><label>Job Title *</label><input type="text" v-model="form.title" placeholder="Senior Product Manager" /></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Location</label>
-            <input type="text" v-model="form.location" placeholder="San Francisco, CA" />
-          </div>
-          <div class="form-group">
-            <label>Work Type</label>
-            <select v-model="form.workType">
-              <option value="">Unknown</option>
-              <option>Remote</option>
-              <option>Hybrid</option>
-              <option>In-Office</option>
-            </select>
+          <div class="form-group"><label>Location</label><input type="text" v-model="form.location" placeholder="San Francisco, CA" /></div>
+          <div class="form-group"><label>Work Type</label>
+            <select v-model="form.workType"><option value="">Unknown</option><option>Remote</option><option>Hybrid</option><option>In-Office</option></select>
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Salary / Range</label>
-            <input type="text" v-model="form.salary" placeholder="$120k–$150k" />
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select v-model="form.status">
-              <option v-for="s in statuses" :key="s">{{ s }}</option>
-            </select>
+          <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" placeholder="$120k–$150k" /></div>
+          <div class="form-group"><label>Status</label>
+            <select v-model="form.status"><option v-for="s in statuses" :key="s">{{ s }}</option></select>
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Job Posting URL</label>
-            <input type="url" v-model="form.url" placeholder="https://…" />
-          </div>
-          <div class="form-group">
-            <label>Date Applied</label>
-            <input type="date" v-model="form.appliedDate" />
-          </div>
+          <div class="form-group"><label>Job Posting URL</label><input type="url" v-model="form.url" placeholder="https://…" /></div>
+          <div class="form-group"><label>Date Applied</label><input type="date" v-model="form.appliedDate" /></div>
         </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea v-model="form.notes" placeholder="Why I'm excited about this role…"></textarea>
-        </div>
+        <div class="form-group"><label>Role Notes</label><textarea v-model="form.roleNotes" placeholder="Why I'm excited about this role…"></textarea></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" @click="showAddModal = false">Cancel</button>
@@ -533,7 +439,7 @@
           <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center">
             <span class="badge" :class="badgeClass(selectedJob.status)">{{ selectedJob.status }}</span>
             <span class="tag-work-type" v-if="selectedJob.workType">{{ selectedJob.workType }}</span>
-            <span v-if="needsFollowUp(selectedJob)" class="followup-flag">⚠️ Follow up?</span>
+            <span v-if="isFollowUpDue(selectedJob)" class="followup-flag">🔔 Follow up due</span>
           </div>
         </div>
         <button class="close-btn" @click="selectedJob = null">×</button>
@@ -545,59 +451,72 @@
         <div>
           <div class="detail-section-title">Details</div>
           <div class="detail-meta-grid">
-            <div class="meta-item">
-              <label>Location</label>
-              <div class="meta-value">{{ selectedJob.location || '—' }}</div>
-            </div>
-            <div class="meta-item">
-              <label>Salary</label>
-              <div class="meta-value">{{ selectedJob.salary || '—' }}</div>
-            </div>
-            <div class="meta-item">
-              <label>Applied</label>
-              <div class="meta-value">{{ formatDate(selectedJob.appliedDate) }}</div>
-            </div>
-            <div class="meta-item">
-              <label>Last Updated</label>
-              <div class="meta-value">{{ formatDate(selectedJob.updatedDate) }}</div>
-            </div>
+            <div class="meta-item"><label>Location</label><div class="meta-value">{{ selectedJob.location || '—' }}</div></div>
+            <div class="meta-item"><label>Salary</label><div class="meta-value">{{ selectedJob.salary || '—' }}</div></div>
+            <div class="meta-item"><label>Applied</label><div class="meta-value">{{ formatDate(selectedJob.appliedDate) }}</div></div>
+            <div class="meta-item"><label>Last Updated</label><div class="meta-value">{{ formatDate(selectedJob.updatedDate) }}</div></div>
           </div>
-          <div style="margin-top:10px" v-if="selectedJob.url">
-            <a :href="selectedJob.url" target="_blank" class="btn btn-ghost btn-sm">🔗 View Posting</a>
-          </div>
+          <div style="margin-top:10px" v-if="selectedJob.url"><a :href="selectedJob.url" target="_blank" class="btn btn-ghost btn-sm">🔗 View Posting</a></div>
         </div>
 
-        <!-- Status -->
+        <!-- Status + Follow-up -->
         <div>
-          <div class="detail-section-title">Update Status</div>
-          <div class="status-select-row">
-            <select v-model="selectedJob.status" @change="updateJobStatus" style="flex:1">
-              <option v-for="s in statuses" :key="s">{{ s }}</option>
-            </select>
+          <div class="detail-section-title">Status & Follow-up</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <select v-model="selectedJob.status" @change="updateJobStatus"><option v-for="s in statuses" :key="s">{{ s }}</option></select>
+            </div>
+            <div class="form-group">
+              <label>Follow-up by</label>
+              <input type="date" v-model="selectedJob.followUpDate" @change="saveData" />
+            </div>
           </div>
+          <div class="hint">Set a follow-up date and it appears in "Follow-ups Due" + the app badge when it's reached. Leave blank for no reminder.</div>
         </div>
 
-        <!-- Company Snapshot -->
+        <!-- Company Profile (shared) -->
         <div>
           <div class="detail-section-title" style="display:flex; justify-content:space-between; align-items:center">
-            <span>Company Snapshot</span>
+            <span>Company Profile <span class="shared-tag">shared across {{ selectedJob.company }}</span></span>
             <button class="btn btn-ghost btn-sm" @click="fetchSnapshot" :disabled="snapshotLoading || !settings.openaiKey">
-              <span v-if="snapshotLoading" class="spinning">⟳</span>
-              <span v-else>✨</span>
-              {{ snapshotLoading ? 'Loading…' : (selectedJob.snapshot ? 'Refresh' : 'Get Insights') }}
+              <span v-if="snapshotLoading" class="spinning">⟳</span><span v-else>✨</span>
+              {{ snapshotLoading ? 'Loading…' : (companyData.snapshot ? 'Refresh' : 'Get Insights') }}
             </button>
           </div>
           <div v-if="!settings.openaiKey" class="hint">Add OpenAI key in Settings to enable</div>
-          <div v-else-if="selectedJob.snapshot" class="company-snapshot">{{ selectedJob.snapshot }}</div>
-          <div v-else class="company-snapshot snapshot-loading">Click "Get Insights" to fetch company info</div>
+          <div v-else-if="companyData.snapshot" class="company-snapshot">{{ companyData.snapshot }}</div>
+          <div v-else class="company-snapshot snapshot-loading">Click "Get Insights" for size, stage, market cap, and Glassdoor-style culture notes. Saved for every {{ selectedJob.company }} role.</div>
         </div>
 
-        <!-- My Notes -->
+        <!-- Company Notes (shared) -->
         <div>
-          <div class="detail-section-title">My Notes</div>
-          <textarea v-model="selectedJob.notes" @blur="saveData"
-            placeholder="Thoughts on the role, recruiter name, things to research…"
-            style="width:100%; min-height:100px"></textarea>
+          <div class="detail-section-title">My Company Notes <span class="shared-tag">shared across {{ selectedJob.company }}</span></div>
+          <textarea v-model="companyData.notes" @blur="saveCompanyData" placeholder="What I think of this company, referrals, research…" style="width:100%; min-height:70px"></textarea>
+        </div>
+
+        <!-- Role Notes -->
+        <div>
+          <div class="detail-section-title">Role Notes</div>
+          <textarea v-model="selectedJob.roleNotes" @blur="saveData" placeholder="Notes specific to this position…" style="width:100%; min-height:80px"></textarea>
+        </div>
+
+        <!-- Key Contacts -->
+        <div>
+          <div class="detail-section-title" style="display:flex; justify-content:space-between; align-items:center">
+            <span>Key Contacts</span>
+            <button class="btn btn-ghost btn-sm" @click="openAddContact">+ Add</button>
+          </div>
+          <div v-if="!selectedJob.contacts || !selectedJob.contacts.length" class="hint">No contacts yet — recruiter, hiring manager, referrals…</div>
+          <div v-for="(c, idx) in selectedJob.contacts" :key="idx" class="contact-entry">
+            <div class="interview-entry-header">
+              <span class="contact-name">{{ c.name }}</span>
+              <button class="btn btn-ghost btn-sm" @click="deleteContact(idx)">🗑</button>
+            </div>
+            <div class="contact-role" v-if="c.role">{{ c.role }}</div>
+            <div class="contact-detail" v-if="c.contact">{{ c.contact }}</div>
+            <div class="interview-notes" v-if="c.notes">{{ c.notes }}</div>
+          </div>
         </div>
 
         <!-- Interview Log -->
@@ -606,9 +525,7 @@
             <span>Interview Log</span>
             <button class="btn btn-ghost btn-sm" @click="openAddInterview">+ Add</button>
           </div>
-          <div v-if="!selectedJob.interviews || selectedJob.interviews.length === 0" class="hint">
-            No interviews logged yet.
-          </div>
+          <div v-if="!selectedJob.interviews || !selectedJob.interviews.length" class="hint">No interviews logged yet.</div>
           <div v-for="(iv, idx) in selectedJob.interviews" :key="idx" class="interview-entry">
             <div class="interview-entry-header">
               <span class="interview-round">{{ iv.round }}</span>
@@ -620,19 +537,14 @@
           </div>
         </div>
 
-        <!-- Questions to Ask -->
+        <!-- Questions -->
         <div>
           <div class="detail-section-title">Questions to Ask Them</div>
-          <textarea v-model="selectedJob.questions" @blur="saveData"
-            placeholder="What does success look like in year one?&#10;What's the team culture like?…"
-            style="width:100%; min-height:80px"></textarea>
+          <textarea v-model="selectedJob.questions" @blur="saveData" placeholder="What does success look like in year one?…" style="width:100%; min-height:80px"></textarea>
         </div>
 
         <hr class="divider" />
-        <div style="display:flex; justify-content:flex-end">
-          <button class="btn btn-danger btn-sm" @click="deleteJob">Delete Job</button>
-        </div>
-
+        <div style="display:flex; justify-content:flex-end"><button class="btn btn-danger btn-sm" @click="deleteJob">Delete Job</button></div>
       </div>
     </div>
   </div>
@@ -640,469 +552,422 @@
   <!-- ── ADD INTERVIEW MODAL ── -->
   <div class="modal-overlay" v-if="showInterviewModal" @click.self="showInterviewModal = false">
     <div class="modal" style="max-width:440px">
-      <div class="modal-header">
-        <div class="modal-title">Log Interview</div>
-        <button class="close-btn" @click="showInterviewModal = false">×</button>
-      </div>
+      <div class="modal-header"><div class="modal-title">Log Interview</div><button class="close-btn" @click="showInterviewModal = false">×</button></div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Round</label>
-          <select v-model="interviewForm.round">
-            <option>Phone Screen</option>
-            <option>Recruiter Call</option>
-            <option>Hiring Manager</option>
-            <option>Technical Interview</option>
-            <option>Panel Interview</option>
-            <option>Final Round</option>
-            <option>Other</option>
-          </select>
+        <div class="form-group"><label>Round</label>
+          <select v-model="interviewForm.round"><option>Phone Screen</option><option>Recruiter Call</option><option>Hiring Manager</option><option>Technical Interview</option><option>Panel Interview</option><option>Final Round</option><option>Other</option></select>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" v-model="interviewForm.date" />
-          </div>
-          <div class="form-group">
-            <label>Interviewer(s)</label>
-            <input type="text" v-model="interviewForm.who" placeholder="Jane Doe, PM" />
-          </div>
+          <div class="form-group"><label>Date</label><input type="date" v-model="interviewForm.date" /></div>
+          <div class="form-group"><label>Interviewer(s)</label><input type="text" v-model="interviewForm.who" placeholder="Jane Doe, PM" /></div>
         </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea v-model="interviewForm.notes" placeholder="How it went, what was discussed…"></textarea>
+        <div class="form-group"><label>Notes</label><textarea v-model="interviewForm.notes" placeholder="How it went, what was discussed…"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" @click="showInterviewModal = false">Cancel</button><button class="btn btn-primary" @click="saveInterview">Save</button></div>
+    </div>
+  </div>
+
+  <!-- ── ADD CONTACT MODAL ── -->
+  <div class="modal-overlay" v-if="showContactModal" @click.self="showContactModal = false">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-header"><div class="modal-title">Add Contact</div><button class="close-btn" @click="showContactModal = false">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input type="text" v-model="contactForm.name" placeholder="Jane Doe" /></div>
+          <div class="form-group"><label>Role</label><input type="text" v-model="contactForm.role" placeholder="Recruiter" /></div>
         </div>
+        <div class="form-group"><label>Email / LinkedIn / Phone</label><input type="text" v-model="contactForm.contact" placeholder="jane@acme.com" /></div>
+        <div class="form-group"><label>Notes</label><textarea v-model="contactForm.notes" placeholder="How we connected…"></textarea></div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" @click="showInterviewModal = false">Cancel</button>
-        <button class="btn btn-primary" @click="saveInterview">Save</button>
-      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" @click="showContactModal = false">Cancel</button><button class="btn btn-primary" @click="saveContact" :disabled="!contactForm.name">Save</button></div>
     </div>
   </div>
 
   <!-- ── SETTINGS MODAL ── -->
   <div class="modal-overlay" v-if="showSettings" @click.self="showSettings = false">
     <div class="modal" style="max-width:500px">
-      <div class="modal-header">
-        <div class="modal-title">⚙️ Settings</div>
-        <button class="close-btn" @click="showSettings = false">×</button>
-      </div>
+      <div class="modal-header"><div class="modal-title">⚙️ Settings</div><button class="close-btn" @click="showSettings = false">×</button></div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>OpenAI API Key</label>
-          <input type="text" v-model="settings.openaiKey" placeholder="sk-…" />
-          <div class="hint">Used for AI job extraction and company snapshots. Stored in your browser only.</div>
-        </div>
+        <div class="form-group"><label>OpenAI API Key</label><input type="text" v-model="settings.openaiKey" placeholder="sk-…" /><div class="hint">Used for AI job extraction and company snapshots. Stored in your browser only.</div></div>
         <hr class="divider" />
-        <div class="form-group">
-          <label>GitHub Personal Access Token</label>
-          <input type="text" v-model="settings.githubToken" placeholder="ghp_…" />
-          <div class="hint">Needed to sync your jobs.json across devices.</div>
+        <div class="form-group"><label>GitHub Personal Access Token</label><input type="text" v-model="settings.githubToken" placeholder="ghp_…" /><div class="hint">Must be created with the <strong>repo</strong> scope checked, or sync won't work.</div></div>
+        <div class="form-row">
+          <div class="form-group"><label>GitHub Username</label><input type="text" v-model="settings.githubUser" placeholder="brwilliams88" /></div>
+          <div class="form-group"><label>GitHub Repo Name</label><input type="text" v-model="settings.githubRepo" placeholder="Job-Hunter" /></div>
         </div>
-        <div class="form-group">
-          <label>GitHub Username</label>
-          <input type="text" v-model="settings.githubUser" placeholder="your-username" />
-        </div>
-        <div class="form-group">
-          <label>GitHub Repo Name</label>
-          <input type="text" v-model="settings.githubRepo" placeholder="Job-Hunter" />
-        </div>
-        <div class="settings-info">
-          💡 <strong>How sync works:</strong> Your job data is saved to a file called <code>jobs.json</code> in your GitHub repo. Any device that opens this app and has these settings will read and write the same file — keeping everything in sync automatically.
-        </div>
-        <div style="display:flex; gap:8px; margin-top:4px">
-          <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">
-            Test Connection
-          </button>
-          <button class="btn btn-secondary btn-sm" @click="pullFromGithub" :disabled="!settings.githubToken">
-            Pull Latest Data
-          </button>
+        <div class="form-group"><label>Token Expiry Date</label><input type="date" v-model="settings.tokenExpiry" /><div class="hint">We'll remind you a week before this date to refresh your token.</div></div>
+        <div class="settings-info">💡 <strong>How sync works:</strong> Your data is saved to <code>jobs.json</code> in your GitHub repo. Any device with these settings reads and writes the same file — keeping everything in sync automatically.</div>
+        <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">Test Connection</button>
+          <button class="btn btn-secondary btn-sm" @click="pullFromGithub" :disabled="!settings.githubToken">Pull Latest Data</button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" @click="showSettings = false">Cancel</button>
-        <button class="btn btn-primary" @click="saveSettings">Save Settings</button>
-      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" @click="showSettings = false">Cancel</button><button class="btn btn-primary" @click="saveSettings">Save Settings</button></div>
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" v-if="toast">{{ toast }}</div>
-
 </div>
 
 <script>
-const { createApp, ref, computed, reactive, watch, onMounted } = Vue;
+const { createApp, ref, computed, reactive, onMounted } = Vue;
 
 createApp({
   setup() {
     // ── State ──
     const jobs        = ref([]);
+    const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
     const showSettings = ref(false);
     const showInterviewModal = ref(false);
+    const showContactModal = ref(false);
     const selectedJob = ref(null);
     const searchQuery = ref('');
     const filterStatus = ref('');
     const filterWorkType = ref('');
     const sortKey  = ref('appliedDate');
-    const sortDir  = ref(-1); // -1 = desc
+    const sortDir  = ref(-1);
+    const aiUrl = ref('');
     const aiPasteText = ref('');
     const aiLoading = ref(false);
+    const aiMode = ref('');
     const snapshotLoading = ref(false);
-    const syncState = ref('ok'); // ok | busy | error
+    const syncState = ref('ok');
     const toast = ref('');
     const githubFileSha = ref('');
+    const dismissedExpiry = ref(false);
 
     const statuses = ['Watching','Applied','Interviewing','Offer','Accepted','Rejected'];
 
     const settings = reactive({
-      openaiKey: '',
-      githubToken: '',
-      githubUser: '',
-      githubRepo: '',
+      openaiKey: '', githubToken: '', githubUser: '', githubRepo: '', tokenExpiry: ''
     });
 
     const form = reactive({
-      company: '', title: '', location: '', workType: '',
-      salary: '', status: 'Applied', url: '', appliedDate: today(),
-      notes: ''
+      company:'', title:'', location:'', workType:'', salary:'',
+      status:'Applied', url:'', appliedDate: today(), roleNotes:''
     });
-
-    const interviewForm = reactive({
-      round: 'Phone Screen', date: today(), who: '', notes: ''
-    });
+    const interviewForm = reactive({ round:'Phone Screen', date: today(), who:'', notes:'' });
+    const contactForm   = reactive({ name:'', role:'', contact:'', notes:'' });
 
     // ── Helpers ──
-    function today() {
-      return new Date().toISOString().slice(0,10);
-    }
-
-    function uid() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-    }
-
+    function today() { return new Date().toISOString().slice(0,10); }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+    function ckey(name) { return (name||'').trim().toLowerCase(); }
     function formatDate(d) {
       if (!d) return '—';
       const dt = new Date(d + 'T12:00:00');
+      if (isNaN(dt)) return d;
       return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     }
-
-    function showToast(msg, duration = 2500) {
-      toast.value = msg;
-      setTimeout(() => toast.value = '', duration);
+    function showToast(msg, ms = 2500) { toast.value = msg; setTimeout(() => toast.value = '', ms); }
+    function badgeClass(s) {
+      return { Watching:'badge-watching', Applied:'badge-applied', Interviewing:'badge-interviewing',
+        Offer:'badge-offer', Accepted:'badge-accepted', Rejected:'badge-rejected' }[s] || 'badge-watching';
     }
+    function countByStatus(s) { return jobs.value.filter(j => j.status === s).length; }
 
-    function badgeClass(status) {
-      const map = {
-        Watching: 'badge-watching', Applied: 'badge-applied',
-        Interviewing: 'badge-interviewing', Offer: 'badge-offer',
-        Accepted: 'badge-accepted', Rejected: 'badge-rejected'
-      };
-      return map[status] || 'badge-watching';
+    // ── Follow-ups ──
+    function isFollowUpDue(job) {
+      if (!job.followUpDate) return false;
+      if (['Rejected','Accepted'].includes(job.status)) return false;
+      return job.followUpDate <= today();
     }
+    const followUpsDue = computed(() => jobs.value.filter(isFollowUpDue)
+      .sort((a,b) => (a.followUpDate < b.followUpDate ? -1 : 1)));
 
-    function countByStatus(s) {
-      return jobs.value.filter(j => j.status === s).length;
-    }
+    // ── Token expiry ──
+    const tokenExpiringSoon = computed(() => {
+      if (!settings.tokenExpiry || !settings.githubToken) return false;
+      const exp = new Date(settings.tokenExpiry + 'T12:00:00').getTime();
+      const days = (exp - Date.now()) / 86400000;
+      return days <= 7;  // within a week (or already past)
+    });
 
-    function needsFollowUp(job) {
-      if (!['Interviewing'].includes(job.status)) return false;
-      const last = job.updatedDate || job.appliedDate;
-      if (!last) return false;
-      const days = (Date.now() - new Date(last).getTime()) / 86400000;
-      return days >= 14;
-    }
+    // ── Company data accessor for selected job ──
+    const companyData = computed(() => {
+      if (!selectedJob.value) return { snapshot:'', notes:'' };
+      const k = ckey(selectedJob.value.company);
+      if (!companies[k]) companies[k] = { snapshot:'', notes:'' };
+      return companies[k];
+    });
 
     // ── Sort & Filter ──
     function setSort(key) {
       if (sortKey.value === key) sortDir.value *= -1;
       else { sortKey.value = key; sortDir.value = 1; }
     }
-
-    function sortArrow(key) {
-      if (sortKey.value !== key) return '↕';
-      return sortDir.value === 1 ? '↑' : '↓';
-    }
+    function sortArrow(key) { return sortKey.value !== key ? '↕' : (sortDir.value === 1 ? '↑' : '↓'); }
 
     const filteredJobs = computed(() => {
       let list = jobs.value.filter(j => {
         const q = searchQuery.value.toLowerCase();
-        const matchQ = !q || [j.company, j.title, j.location, j.salary]
-          .some(v => (v||'').toLowerCase().includes(q));
+        const matchQ = !q || [j.company, j.title, j.location, j.salary].some(v => (v||'').toLowerCase().includes(q));
         const matchS = !filterStatus.value || j.status === filterStatus.value;
         const matchW = !filterWorkType.value || j.workType === filterWorkType.value;
         return matchQ && matchS && matchW;
       });
-
-      list = [...list].sort((a, b) => {
-        let av = a[sortKey.value] || '';
-        let bv = b[sortKey.value] || '';
+      return [...list].sort((a,b) => {
+        const av = a[sortKey.value] || '', bv = b[sortKey.value] || '';
         return av < bv ? -sortDir.value : av > bv ? sortDir.value : 0;
       });
-
-      return list;
     });
 
     // ── Add / Save Job ──
     function openAddModal() {
-      Object.assign(form, {
-        company:'', title:'', location:'', workType:'',
-        salary:'', status:'Applied', url:'', appliedDate: today(), notes:''
-      });
-      aiPasteText.value = '';
+      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'Applied', url:'', appliedDate: today(), roleNotes:'' });
+      aiUrl.value = ''; aiPasteText.value = '';
       showAddModal.value = true;
     }
-
     function saveJob() {
-      const job = {
-        id: uid(),
-        company: form.company.trim(),
-        title: form.title.trim(),
-        location: form.location.trim(),
-        workType: form.workType,
-        salary: form.salary.trim(),
-        status: form.status,
-        url: form.url.trim(),
-        appliedDate: form.appliedDate,
-        updatedDate: today(),
-        notes: form.notes.trim(),
-        snapshot: '',
-        interviews: [],
-        questions: ''
-      };
-      jobs.value.unshift(job);
+      jobs.value.unshift({
+        id: uid(), company: form.company.trim(), title: form.title.trim(),
+        location: form.location.trim(), workType: form.workType, salary: form.salary.trim(),
+        status: form.status, url: form.url.trim(), appliedDate: form.appliedDate,
+        updatedDate: today(), roleNotes: form.roleNotes.trim(),
+        interviews: [], contacts: [], questions: '', followUpDate: ''
+      });
       showAddModal.value = false;
       saveData();
       showToast('✅ Job saved!');
     }
 
     // ── Detail ──
-    function openDetail(job) {
-      selectedJob.value = job;
-    }
-
-    function updateJobStatus() {
-      selectedJob.value.updatedDate = today();
-      saveData();
-    }
-
+    function openDetail(job) { selectedJob.value = job; }
+    function updateJobStatus() { selectedJob.value.updatedDate = today(); saveData(); }
     function deleteJob() {
       if (!confirm(`Delete ${selectedJob.value.company} – ${selectedJob.value.title}?`)) return;
       jobs.value = jobs.value.filter(j => j.id !== selectedJob.value.id);
       selectedJob.value = null;
-      saveData();
-      showToast('🗑 Job deleted');
+      saveData(); showToast('🗑 Job deleted');
     }
 
     // ── Interview ──
-    function openAddInterview() {
-      Object.assign(interviewForm, { round:'Phone Screen', date: today(), who:'', notes:'' });
-      showInterviewModal.value = true;
-    }
-
+    function openAddInterview() { Object.assign(interviewForm, { round:'Phone Screen', date: today(), who:'', notes:'' }); showInterviewModal.value = true; }
     function saveInterview() {
       if (!selectedJob.value.interviews) selectedJob.value.interviews = [];
       selectedJob.value.interviews.push({ ...interviewForm });
       selectedJob.value.updatedDate = today();
-      showInterviewModal.value = false;
-      saveData();
-      showToast('✅ Interview logged');
+      showInterviewModal.value = false; saveData(); showToast('✅ Interview logged');
+    }
+    function deleteInterview(idx) { selectedJob.value.interviews.splice(idx,1); saveData(); }
+
+    // ── Contacts ──
+    function openAddContact() { Object.assign(contactForm, { name:'', role:'', contact:'', notes:'' }); showContactModal.value = true; }
+    function saveContact() {
+      if (!selectedJob.value.contacts) selectedJob.value.contacts = [];
+      selectedJob.value.contacts.push({ ...contactForm });
+      showContactModal.value = false; saveData(); showToast('✅ Contact added');
+    }
+    function deleteContact(idx) { selectedJob.value.contacts.splice(idx,1); saveData(); }
+
+    function saveCompanyData() { saveData(); }
+
+    // ── OpenAI helpers ──
+    function stripJson(text) {
+      return text.replace(/```json/gi,'').replace(/```/g,'').trim();
+    }
+    function applyExtracted(parsed) {
+      if (parsed.company)  form.company  = parsed.company;
+      if (parsed.title)    form.title    = parsed.title;
+      if (parsed.location) form.location = parsed.location;
+      if (parsed.workType) form.workType = parsed.workType;
+      if (parsed.salary)   form.salary   = parsed.salary;
     }
 
-    function deleteInterview(idx) {
-      selectedJob.value.interviews.splice(idx, 1);
-      saveData();
-    }
-
-    // ── AI: Extract Job Info ──
-    async function extractJobInfo() {
+    async function extractFromText() {
       if (!settings.openaiKey || !aiPasteText.value.trim()) return;
-      aiLoading.value = true;
+      aiLoading.value = true; aiMode.value = 'text';
       try {
-        const prompt = `Extract the following information from this job posting and return ONLY valid JSON (no markdown, no explanation):
-{
-  "company": "Company name",
-  "title": "Job title",
-  "location": "City, State or Country",
-  "workType": "Remote | Hybrid | In-Office | (leave empty if unknown)",
-  "salary": "Salary range as written, e.g. $120k–$150k or empty string"
-}
+        const prompt = `Extract from this job posting and return ONLY valid JSON (no markdown):
+{"company":"","title":"","location":"","workType":"Remote | Hybrid | In-Office | (empty if unknown)","salary":""}
 
 Job posting:
-${aiPasteText.value.slice(0, 4000)}`;
-
+${aiPasteText.value.slice(0,5000)}`;
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${settings.openaiKey}` },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [{ role:'user', content: prompt }],
-            temperature: 0
-          })
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
+          body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:prompt}], temperature:0 })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
-        const text = data.choices[0].message.content.trim();
-        const parsed = JSON.parse(text);
-        if (parsed.company)   form.company   = parsed.company;
-        if (parsed.title)     form.title     = parsed.title;
-        if (parsed.location)  form.location  = parsed.location;
-        if (parsed.workType)  form.workType  = parsed.workType;
-        if (parsed.salary)    form.salary    = parsed.salary;
+        applyExtracted(JSON.parse(stripJson(data.choices[0].message.content)));
         showToast('✨ Details extracted!');
-      } catch(e) {
-        showToast('⚠️ AI extraction failed: ' + e.message, 4000);
-      }
-      aiLoading.value = false;
+      } catch(e) { showToast('⚠️ Extraction failed: ' + e.message, 4000); }
+      aiLoading.value = false; aiMode.value = '';
     }
 
-    // ── AI: Company Snapshot ──
+    // Responses API w/ web search
+    function responsesText(data) {
+      if (data.output_text) return data.output_text;
+      let out = '';
+      (data.output || []).forEach(item => {
+        if (item.type === 'message' && Array.isArray(item.content)) {
+          item.content.forEach(c => { if (c.type === 'output_text') out += c.text; });
+        }
+      });
+      return out;
+    }
+
+    async function extractFromUrl() {
+      if (!settings.openaiKey || !aiUrl.value.trim()) return;
+      aiLoading.value = true; aiMode.value = 'url';
+      try {
+        if (form.url === '' || !form.url) form.url = aiUrl.value.trim();
+        const prompt = `Look up this job posting online: ${aiUrl.value.trim()}
+Find the company name, job title, location, work type (Remote/Hybrid/In-Office), and salary range.
+Return ONLY valid JSON (no markdown, no commentary):
+{"company":"","title":"","location":"","workType":"","salary":""}`;
+        const res = await fetch('https://api.openai.com/v1/responses', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
+          body: JSON.stringify({ model:'gpt-4o', tools:[{type:'web_search_preview'}], input: prompt })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const txt = stripJson(responsesText(data));
+        applyExtracted(JSON.parse(txt));
+        showToast('🌐 Pulled from the web!');
+      } catch(e) {
+        showToast('⚠️ Could not read that URL — try pasting the text instead. (' + e.message + ')', 5000);
+      }
+      aiLoading.value = false; aiMode.value = '';
+    }
+
     async function fetchSnapshot() {
       if (!settings.openaiKey || !selectedJob.value) return;
       snapshotLoading.value = true;
       try {
-        const prompt = `Give a brief company snapshot for "${selectedJob.value.company}" in 4-6 bullet points covering:
-• Company size (approximate headcount)
-• Funding stage / market cap (if public or known)
+        const prompt = `Give a current company snapshot for "${selectedJob.value.company}" using up-to-date web information. Cover in concise bullets (no markdown headers):
+• Size (approx headcount)
+• Funding stage / market cap (if startup or public)
 • Industry / what they do
-• Notable culture or reputation notes (based on public info, Glassdoor sentiment, etc.)
+• Culture & reputation — summarize what people say on Glassdoor and similar
 • Any recent news worth knowing
-
-Keep each bullet concise. If you're unsure of something, say so briefly. No markdown headers.`;
-
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${settings.openaiKey}` },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [{ role:'user', content: prompt }],
-            temperature: 0.3
-          })
+If unsure on a point, say so briefly.`;
+        const res = await fetch('https://api.openai.com/v1/responses', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
+          body: JSON.stringify({ model:'gpt-4o', tools:[{type:'web_search_preview'}], input: prompt })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
-        selectedJob.value.snapshot = data.choices[0].message.content.trim();
-        saveData();
-        showToast('✨ Snapshot loaded');
-      } catch(e) {
-        showToast('⚠️ Snapshot failed: ' + e.message, 4000);
-      }
+        const k = ckey(selectedJob.value.company);
+        if (!companies[k]) companies[k] = { snapshot:'', notes:'' };
+        companies[k].snapshot = responsesText(data).trim();
+        saveData(); showToast('✨ Company profile loaded');
+      } catch(e) { showToast('⚠️ Snapshot failed: ' + e.message, 4000); }
       snapshotLoading.value = false;
+    }
+
+    // ── Export ──
+    function exportJson() {
+      const blob = new Blob([JSON.stringify({ jobs: jobs.value, companies }, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `job-hunter-backup-${today()}.json`; a.click();
+      URL.revokeObjectURL(url);
+      showToast('⬇ Backup downloaded');
     }
 
     // ── GitHub Sync ──
     function githubApiUrl() {
       return `https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}/contents/jobs.json`;
     }
+    function payload() { return { jobs: jobs.value, companies }; }
 
     async function pullFromGithub() {
       if (!settings.githubToken || !settings.githubUser || !settings.githubRepo) return;
       try {
         syncState.value = 'busy';
-        const res = await fetch(githubApiUrl(), {
-          headers: { 'Authorization': `Bearer ${settings.githubToken}`, 'Accept': 'application/vnd.github+json' }
-        });
-        if (res.status === 404) { syncState.value = 'ok'; return; } // no file yet
+        const res = await fetch(githubApiUrl(), { headers:{ 'Authorization':`Bearer ${settings.githubToken}`, 'Accept':'application/vnd.github+json' } });
+        if (res.status === 404) { syncState.value = 'ok'; return; }
         const data = await res.json();
         githubFileSha.value = data.sha;
-        const decoded = JSON.parse(atob(data.content.replace(/\n/g,'')));
-        jobs.value = decoded;
-        syncState.value = 'ok';
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+        if (Array.isArray(decoded)) { jobs.value = decoded; }
+        else {
+          jobs.value = decoded.jobs || [];
+          Object.keys(companies).forEach(k => delete companies[k]);
+          Object.assign(companies, decoded.companies || {});
+        }
+        syncState.value = 'ok'; updateBadge();
         showToast('🔄 Data pulled from GitHub');
-      } catch(e) {
-        syncState.value = 'error';
-        showToast('⚠️ Pull failed: ' + e.message, 4000);
-      }
+      } catch(e) { syncState.value = 'error'; showToast('⚠️ Pull failed: ' + e.message, 4000); }
     }
 
     async function pushToGithub() {
       if (!settings.githubToken || !settings.githubUser || !settings.githubRepo) return;
       syncState.value = 'busy';
       try {
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(jobs.value, null, 2))));
-        const body = {
-          message: 'Update jobs.json',
-          content,
-          ...(githubFileSha.value ? { sha: githubFileSha.value } : {})
-        };
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload(), null, 2))));
+        const body = { message:'Update jobs.json', content, ...(githubFileSha.value ? { sha: githubFileSha.value } : {}) };
         const res = await fetch(githubApiUrl(), {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${settings.githubToken}`,
-            'Accept': 'application/vnd.github+json',
-            'Content-Type': 'application/json'
-          },
+          method:'PUT',
+          headers:{ 'Authorization':`Bearer ${settings.githubToken}`, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json' },
           body: JSON.stringify(body)
         });
         const data = await res.json();
         if (data.content) githubFileSha.value = data.content.sha;
+        else if (data.message) throw new Error(data.message);
         syncState.value = 'ok';
-      } catch(e) {
-        syncState.value = 'error';
-        showToast('⚠️ Sync failed: ' + e.message, 4000);
-      }
+      } catch(e) { syncState.value = 'error'; showToast('⚠️ Sync failed: ' + e.message, 4000); }
     }
 
     async function testGithub() {
       try {
         syncState.value = 'busy';
-        const res = await fetch(`https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}`, {
-          headers: { 'Authorization': `Bearer ${settings.githubToken}` }
-        });
-        if (res.ok) {
-          syncState.value = 'ok';
-          showToast('✅ GitHub connected successfully!');
-        } else {
-          throw new Error('Status ' + res.status);
-        }
-      } catch(e) {
-        syncState.value = 'error';
-        showToast('⚠️ Connection failed: ' + e.message, 4000);
-      }
+        const res = await fetch(`https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}`, { headers:{ 'Authorization':`Bearer ${settings.githubToken}` } });
+        if (res.ok) { syncState.value = 'ok'; showToast('✅ GitHub connected successfully!'); }
+        else throw new Error('Status ' + res.status + ' — check token scope (needs repo), username, and repo name');
+      } catch(e) { syncState.value = 'error'; showToast('⚠️ Connection failed: ' + e.message, 5000); }
+    }
+
+    // ── PWA badge ──
+    function updateBadge() {
+      try {
+        const n = followUpsDue.value.length;
+        if (navigator.setAppBadge) { n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge(); }
+      } catch(e) {}
     }
 
     // ── Persist ──
     function saveData() {
       localStorage.setItem('jh_jobs', JSON.stringify(jobs.value));
-      pushToGithub(); // fire and forget
+      localStorage.setItem('jh_companies', JSON.stringify(companies));
+      updateBadge();
+      pushToGithub();
     }
-
-    function loadSettings() {
-      const s = localStorage.getItem('jh_settings');
-      if (s) Object.assign(settings, JSON.parse(s));
-    }
-
+    function loadSettings() { const s = localStorage.getItem('jh_settings'); if (s) Object.assign(settings, JSON.parse(s)); }
     function saveSettings() {
       localStorage.setItem('jh_settings', JSON.stringify({ ...settings }));
-      showSettings.value = false;
-      showToast('✅ Settings saved');
-      pullFromGithub();
+      showSettings.value = false; showToast('✅ Settings saved'); pullFromGithub();
     }
 
     // ── Init ──
     onMounted(async () => {
       loadSettings();
-      const local = localStorage.getItem('jh_jobs');
-      if (local) jobs.value = JSON.parse(local);
+      const localJobs = localStorage.getItem('jh_jobs');
+      if (localJobs) jobs.value = JSON.parse(localJobs);
+      const localCo = localStorage.getItem('jh_companies');
+      if (localCo) Object.assign(companies, JSON.parse(localCo));
       if (settings.githubToken) await pullFromGithub();
-      if (!settings.openaiKey || !settings.githubToken) {
-        setTimeout(() => showToast('👋 Open Settings to configure your API keys', 4000), 800);
-      }
+      updateBadge();
+      if (!settings.openaiKey || !settings.githubToken) setTimeout(() => showToast('👋 Open ⚙️ Settings to configure your keys', 4000), 800);
+      if ('serviceWorker' in navigator) { try { await navigator.serviceWorker.register('sw.js'); } catch(e) {} }
     });
 
     return {
-      jobs, statuses, showAddModal, showSettings, showInterviewModal,
-      selectedJob, searchQuery, filterStatus, filterWorkType,
-      sortKey, sortDir, filteredJobs, aiPasteText, aiLoading,
-      snapshotLoading, syncState, toast, settings,
-      form, interviewForm,
-      formatDate, badgeClass, countByStatus, needsFollowUp,
-      setSort, sortArrow,
+      jobs, companies, statuses, showAddModal, showSettings, showInterviewModal, showContactModal,
+      selectedJob, searchQuery, filterStatus, filterWorkType, sortKey, sortDir, filteredJobs,
+      aiUrl, aiPasteText, aiLoading, aiMode, snapshotLoading, syncState, toast, settings,
+      form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
+      formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
       openAddModal, saveJob, openDetail, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
-      extractJobInfo, fetchSnapshot,
-      pullFromGithub, pushToGithub, testGithub,
-      saveData, saveSettings
+      openAddContact, saveContact, deleteContact, saveCompanyData,
+      extractFromText, extractFromUrl, fetchSnapshot, exportJson,
+      pullFromGithub, pushToGithub, testGithub, saveData, saveSettings
     };
   }
 }).mount('#app');
