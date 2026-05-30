@@ -144,6 +144,15 @@
     td { padding: 11px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
     tr:hover td { background: rgba(245,121,46,0.05); cursor: pointer; }
     .company-name { font-weight: 600; }
+    /* Star toggle */
+    .star-toggle { cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; user-select: none; transition: transform 0.1s; }
+    .star-toggle:hover { transform: scale(1.2); }
+    .star-toggle.starred { color: var(--accent); text-shadow: 0 0 8px rgba(245,121,46,0.5); }
+    /* Row states */
+    .row-followup td { background: rgba(214,177,58,0.10) !important; }
+    .row-followup td:first-child { box-shadow: inset 3px 0 0 var(--yellow); }
+    .row-starred td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+    .row-followup.row-starred td:first-child { box-shadow: inset 3px 0 0 var(--yellow), inset 6px 0 0 var(--accent); }
     .location-text { font-size: 12px; color: var(--muted); }
     .salary-text { font-size: 12px; white-space: nowrap; }
     .date-text { font-size: 12px; color: var(--muted); white-space: nowrap; }
@@ -287,7 +296,7 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">{{ jobs.length }}</div>
-        <div class="stat-label">All Jobs</div>
+        <div class="stat-label">Total</div>
       </div>
       <div class="stat-card">
         <div class="stat-number" style="color:var(--accent)">{{ countByStatus('Applied') }}</div>
@@ -327,6 +336,7 @@
         <option>Hybrid</option>
         <option>In-Office</option>
       </select>
+      <button class="btn btn-sm" :class="filterStarred ? 'btn-primary' : 'btn-ghost'" @click="filterStarred = !filterStarred">★ Starred</button>
       <button class="btn btn-ghost btn-sm" @click="exportJson">⬇ Export</button>
     </div>
 
@@ -354,10 +364,16 @@
               </div>
             </td>
           </tr>
-          <tr v-for="job in filteredJobs" :key="job.id" @click="openDetail(job)">
+          <tr v-for="job in filteredJobs" :key="job.id" @click="openDetail(job)"
+              :class="{ 'row-followup': isFollowUpDue(job), 'row-starred': job.starred }">
             <td>
-              <div class="company-name">{{ job.company }}</div>
-              <div v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</div>
+              <div style="display:flex; align-items:flex-start; gap:8px">
+                <span class="star-toggle" :class="{ starred: job.starred }" @click.stop="toggleStar(job)">{{ job.starred ? '★' : '☆' }}</span>
+                <div>
+                  <div class="company-name">{{ job.company }}</div>
+                  <div v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</div>
+                </div>
+              </div>
             </td>
             <td><div>{{ job.title }}</div></td>
             <td class="hide-mobile location-text">{{ job.location }}</td>
@@ -434,7 +450,10 @@
     <div class="detail-panel">
       <div class="detail-header">
         <div>
-          <div class="detail-company">{{ selectedJob.company }}</div>
+          <div class="detail-company">
+            <span class="star-toggle" :class="{ starred: selectedJob.starred }" @click="toggleStar(selectedJob)">{{ selectedJob.starred ? '★' : '☆' }}</span>
+            {{ selectedJob.company }}
+          </div>
           <div class="detail-title">{{ selectedJob.title }}</div>
           <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center">
             <span class="badge" :class="badgeClass(selectedJob.status)">{{ selectedJob.status }}</span>
@@ -597,6 +616,7 @@
         </div>
         <div class="form-group"><label>Token Expiry Date</label><input type="date" v-model="settings.tokenExpiry" /><div class="hint">We'll remind you a week before this date to refresh your token.</div></div>
         <div class="settings-info">💡 <strong>How sync works:</strong> Your data is saved to <code>jobs.json</code> in your GitHub repo. Any device with these settings reads and writes the same file — keeping everything in sync automatically.</div>
+        <div class="hint" style="text-align:center">Job Hunter {{ appVersion }}</div>
         <div style="display:flex; gap:8px; margin-top:4px; flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">Test Connection</button>
           <button class="btn btn-secondary btn-sm" @click="pullFromGithub" :disabled="!settings.githubToken">Pull Latest Data</button>
@@ -615,6 +635,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
+    const appVersion  = 'v3';
     const jobs        = ref([]);
     const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
     const showAddModal = ref(false);
@@ -625,6 +646,7 @@ createApp({
     const searchQuery = ref('');
     const filterStatus = ref('');
     const filterWorkType = ref('');
+    const filterStarred = ref(false);
     const sortKey  = ref('appliedDate');
     const sortDir  = ref(-1);
     const aiUrl = ref('');
@@ -636,6 +658,8 @@ createApp({
     const toast = ref('');
     const githubFileSha = ref('');
     const dismissedExpiry = ref(false);
+    const pendingPush = ref(false);
+    let lastPull = 0;
 
     const statuses = ['Watching','Applied','Interviewing','Offer','Accepted','Rejected'];
 
@@ -705,7 +729,8 @@ createApp({
         const matchQ = !q || [j.company, j.title, j.location, j.salary].some(v => (v||'').toLowerCase().includes(q));
         const matchS = !filterStatus.value || j.status === filterStatus.value;
         const matchW = !filterWorkType.value || j.workType === filterWorkType.value;
-        return matchQ && matchS && matchW;
+        const matchStar = !filterStarred.value || j.starred;
+        return matchQ && matchS && matchW && matchStar;
       });
       return [...list].sort((a,b) => {
         const av = a[sortKey.value] || '', bv = b[sortKey.value] || '';
@@ -725,7 +750,7 @@ createApp({
         location: form.location.trim(), workType: form.workType, salary: form.salary.trim(),
         status: form.status, url: form.url.trim(), appliedDate: form.appliedDate,
         updatedDate: today(), roleNotes: form.roleNotes.trim(),
-        interviews: [], contacts: [], questions: '', followUpDate: ''
+        interviews: [], contacts: [], questions: '', followUpDate: '', starred: false
       });
       showAddModal.value = false;
       saveData();
@@ -734,6 +759,7 @@ createApp({
 
     // ── Detail ──
     function openDetail(job) { selectedJob.value = job; }
+    function toggleStar(job) { job.starred = !job.starred; saveData(); }
     function updateJobStatus() { selectedJob.value.updatedDate = today(); saveData(); }
     function deleteJob() {
       if (!confirm(`Delete ${selectedJob.value.company} – ${selectedJob.value.title}?`)) return;
@@ -898,6 +924,7 @@ If unsure on a point, say so briefly.`;
 
     async function pushToGithub() {
       if (!settings.githubToken || !settings.githubUser || !settings.githubRepo) return;
+      if (!navigator.onLine) { pendingPush.value = true; syncState.value = 'error'; return; }
       syncState.value = 'busy';
       try {
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload(), null, 2))));
@@ -910,8 +937,17 @@ If unsure on a point, say so briefly.`;
         const data = await res.json();
         if (data.content) githubFileSha.value = data.content.sha;
         else if (data.message) throw new Error(data.message);
-        syncState.value = 'ok';
-      } catch(e) { syncState.value = 'error'; showToast('⚠️ Sync failed: ' + e.message, 4000); }
+        syncState.value = 'ok'; pendingPush.value = false;
+      } catch(e) { pendingPush.value = true; syncState.value = 'error'; showToast('⚠️ Sync failed (will retry when online): ' + e.message, 4000); }
+    }
+
+    // Auto-pull when the app regains focus (guarded so it won't clobber an open edit)
+    async function maybePull() {
+      if (!settings.githubToken) return;
+      if (selectedJob.value || showAddModal.value || showSettings.value || showInterviewModal.value || showContactModal.value) return;
+      if (Date.now() - lastPull < 15000) return; // throttle
+      lastPull = Date.now();
+      await pullFromGithub();
     }
 
     async function testGithub() {
@@ -955,15 +991,20 @@ If unsure on a point, say so briefly.`;
       updateBadge();
       if (!settings.openaiKey || !settings.githubToken) setTimeout(() => showToast('👋 Open ⚙️ Settings to configure your keys', 4000), 800);
       if ('serviceWorker' in navigator) { try { await navigator.serviceWorker.register('sw.js'); } catch(e) {} }
+
+      // Auto-pull on focus/visibility; auto-push pending changes on reconnect
+      window.addEventListener('focus', maybePull);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) maybePull(); });
+      window.addEventListener('online', () => { if (pendingPush.value) { showToast('🔌 Back online — syncing…'); pushToGithub(); } });
     });
 
     return {
-      jobs, companies, statuses, showAddModal, showSettings, showInterviewModal, showContactModal,
-      selectedJob, searchQuery, filterStatus, filterWorkType, sortKey, sortDir, filteredJobs,
+      appVersion, jobs, companies, statuses, showAddModal, showSettings, showInterviewModal, showContactModal,
+      selectedJob, searchQuery, filterStatus, filterWorkType, filterStarred, sortKey, sortDir, filteredJobs,
       aiUrl, aiPasteText, aiLoading, aiMode, snapshotLoading, syncState, toast, settings,
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
-      openAddModal, saveJob, openDetail, updateJobStatus, deleteJob,
+      openAddModal, saveJob, openDetail, toggleStar, updateJobStatus, deleteJob,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, saveContact, deleteContact, saveCompanyData,
       extractFromText, extractFromUrl, fetchSnapshot, exportJson,
