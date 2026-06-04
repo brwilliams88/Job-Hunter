@@ -170,9 +170,9 @@
     td { padding: 11px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
     tr:hover td { background: rgba(245,121,46,0.05); cursor: pointer; }
     .company-name { font-weight: 600; }
-    /* Prominent company name (bold gold) */
-    .company-cell { font-weight: 800; font-size: 14px; color: #e0b878; letter-spacing: -0.1px; }
-    .detail-title.company-prom { font-weight: 800; color: #e0b878; font-size: 15px; }
+    /* Prominent company name (bold cream) */
+    .company-cell { font-weight: 800; font-size: 14px; color: #f4f1e6; letter-spacing: -0.1px; }
+    .detail-title.company-prom { font-weight: 800; color: #f4f1e6; font-size: 16px; }
     /* Title cell: star centered, link pinned to a consistent column */
     .title-cell { display: flex; align-items: center; gap: 10px; }
     .title-main { flex: 1; min-width: 0; }
@@ -508,6 +508,28 @@
     /* Spend table scroll on narrow screens */
     .spend-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .spend-table { min-width: 360px; }
+
+    /* Standard info card (used for Role Overview) */
+    .info-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.6; }
+    .lbl-sub { text-transform: none; font-weight: 400; color: var(--muted); }
+
+    /* Compact referral toggle (inline pill, not full width) */
+    .referral-block.compact { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; background: transparent; border: none; padding: 8px 0 0; margin: 0; }
+    .referral-block.compact .switch-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; }
+    .referral-block.compact .referrer-input { width: auto; flex: 1; min-width: 160px; margin: 0; }
+
+    /* Accept Offer button + accepted row */
+    .btn-accept { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--green), #5e8f2a); color: #0f1407; font-weight: 800; font-size: 13px; padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer; box-shadow: 0 2px 10px rgba(127,174,58,0.4); }
+    .btn-accept:hover { filter: brightness(1.08); }
+    .row-accepted td { background: rgba(127,174,58,0.12) !important; }
+    .row-accepted td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+    .row-accepted .company-name::after { content: ' 🎉'; }
+
+    /* Hunt management in settings */
+    .hunt-current { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; flex-wrap: wrap; }
+    .hunt-name { font-weight: 700; font-size: 14px; }
+    .hunt-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; font-size: 13px; }
+    .hunt-row.active { border-color: var(--accent); background: rgba(245,121,46,0.08); }
   </style>
 </head>
 <body>
@@ -619,14 +641,14 @@
           <tr v-if="filteredJobs.length === 0">
             <td colspan="8">
               <div class="empty-state">
-                <div class="empty-icon">🎯</div>
-                <strong>No jobs yet</strong>
-                <p>Click "Add Job" to start tracking your applications</p>
+                <div class="empty-icon">{{ emptyMessage.icon }}</div>
+                <strong>{{ emptyMessage.title }}</strong>
+                <p>{{ emptyMessage.sub }}</p>
               </div>
             </td>
           </tr>
           <tr v-for="job in filteredJobs" :key="job.id" @click="openDetail(job)"
-              :class="{ 'row-followup': isFollowUpDue(job), 'row-starred': job.starred }">
+              :class="{ 'row-followup': isFollowUpDue(job), 'row-starred': job.starred, 'row-accepted': job.status==='Accepted' }">
             <td>
               <div class="title-cell">
                 <span class="star-toggle" :class="{ starred: job.starred }" @click.stop="toggleStar(job)">{{ job.starred ? '★' : '☆' }}</span>
@@ -649,7 +671,7 @@
             <td class="hide-mobile"><span class="stage-tag" v-if="job.stage">{{ job.stage }}</span><span v-else class="date-text">—</span></td>
             <td @click.stop>
               <select class="inline-status" :style="statusStyle(job.status)" v-model="job.status" @change="onInlineStatus(job)">
-                <option v-for="s in statuses" :key="s">{{ s }}</option>
+                <option v-for="s in statusOptions(job)" :key="s">{{ s }}</option>
               </select>
             </td>
             <td class="hide-mobile date-text">{{ formatDate(job.appliedDate) }}</td>
@@ -660,78 +682,76 @@
   </main>
 
   <!-- ── ADD JOB MODAL ── -->
-  <div class="modal-overlay" v-if="showAddModal" @click.self="showAddModal = false">
+  <div class="modal-overlay" v-if="showAddModal" @click.self="showAddModal = false" style="z-index:300">
     <div class="modal">
       <div class="modal-header">
         <div class="modal-title">{{ editingJobId ? 'Edit Job' : 'Add Job' }}</div>
       </div>
       <div class="modal-body">
 
-        <!-- AI autofill (optional) -->
+        <!-- ✨ Autofill -->
         <div v-if="settings.openaiKey && !editingJobId" class="ai-panel">
-          <div class="ai-panel-title">✨ Autofill from a posting</div>
-          <div class="ai-panel-sub">Drop in a link or the job text — we'll fill the form below for you to review.</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <input type="url" v-model="aiUrl" placeholder="Paste a job posting URL…" style="flex:1; min-width:150px" />
-            <button class="btn btn-secondary btn-sm" @click="extractFromUrl" :disabled="aiLoading || !aiUrl.trim()">
-              <span v-if="aiLoading && aiMode==='url'" class="spinning">⟳</span><span v-else>🌐</span>
-              {{ aiLoading && aiMode==='url' ? 'Reading…' : 'Fetch' }}
-            </button>
-          </div>
-          <div style="display:flex; justify-content:flex-end; margin-top:6px">
-            <select v-model="settings.urlMode" @change="persistSettings" style="width:auto; font-size:11px; padding:5px 8px">
-              <option value="quick">Quick Fetch · low cost</option>
-              <option value="web">Web Search · higher cost</option>
-            </select>
-          </div>
-          <div class="ai-or">— or paste the text —</div>
-          <textarea class="ai-paste-area" v-model="aiPasteText" placeholder="Paste the full job description here…" style="min-height:78px"></textarea>
-          <button class="btn btn-secondary btn-sm" @click="extractFromText" :disabled="aiLoading || !aiPasteText.trim()" style="margin-top:8px; width:100%; justify-content:center">
-            <span v-if="aiLoading && aiMode==='text'" class="spinning">⟳</span><span v-else>✨</span>
-            {{ aiLoading && aiMode==='text' ? 'Extracting…' : 'Extract from text' }}
+          <div class="ai-panel-title">✨ Autofill</div>
+          <div class="ai-panel-sub">Paste a job posting <strong>link</strong> or the <strong>full job text</strong> (either works) and we'll fill in the details below.</div>
+          <textarea class="ai-paste-area" v-model="aiInput" placeholder="Paste a URL or the job description here…" style="min-height:84px"></textarea>
+          <button class="btn btn-primary" @click="autofill" :disabled="aiLoading || !aiInput.trim()" style="margin-top:8px; width:100%; justify-content:center">
+            <span v-if="aiLoading" class="spinning">⟳</span><span v-else>✨</span>
+            {{ aiLoading ? 'Reading the posting…' : 'Autofill' }}
           </button>
         </div>
 
         <div class="manual-divider" v-if="settings.openaiKey && !editingJobId" style="margin-top:4px">Job details</div>
 
         <div class="form-row">
-          <div class="form-group"><label>Company *</label><input type="text" v-model="form.company" :class="{ 'needs-fill': justExtracted && !form.company }" placeholder="Acme Corp" /></div>
           <div class="form-group"><label>Job Title *</label><input type="text" v-model="form.title" :class="{ 'needs-fill': justExtracted && !form.title }" placeholder="Senior Product Manager" /></div>
+          <div class="form-group"><label>Company *</label><input type="text" v-model="form.company" :class="{ 'needs-fill': justExtracted && !form.company }" placeholder="Acme Corp" /></div>
         </div>
+
+        <div class="form-group"><label>Role Overview <span class="lbl-sub">— what the role entails (AI-filled, editable)</span></label><textarea v-model="form.summary" placeholder="- Lead product strategy for…&#10;- Partner with engineering on…" style="min-height:90px"></textarea></div>
+
+        <!-- Company profile (optional, one tap) -->
+        <div class="form-group" v-if="settings.openaiKey && form.company.trim()">
+          <label>Company Profile</label>
+          <div v-if="formCompanyProfile" class="company-snapshot" v-html="mdToHtml(formCompanyProfile)" style="max-height:160px; overflow:auto"></div>
+          <button v-else class="btn btn-secondary btn-sm" @click="genFormProfile" :disabled="formProfileLoading" style="align-self:flex-start">
+            <span v-if="formProfileLoading" class="spinning">⟳</span><span v-else>✨</span>
+            {{ formProfileLoading ? 'Generating…' : 'Generate company profile' }}
+          </button>
+        </div>
+
         <div class="form-row">
           <div class="form-group"><label>Location</label><input type="text" v-model="form.location" :class="{ 'needs-fill': justExtracted && !form.location }" placeholder="San Francisco, CA" /></div>
           <div class="form-group"><label>Work Type</label>
-            <select v-model="form.workType" :class="{ 'needs-fill': justExtracted && !form.workType }"><option value="">Unknown</option><option>Remote</option><option>Hybrid</option><option>In-Office</option></select>
+            <select v-model="form.workType" :class="{ 'needs-fill': justExtracted && !form.workType }"><option value="">Unknown</option><option v-for="w in workTypes" :key="w">{{ w }}</option></select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" :class="{ 'needs-fill': justExtracted && !form.salary }" placeholder="$120K–$150K" /></div>
-          <div class="form-group"><label>Status *</label>
-            <select v-model="form.status" :class="{ 'needs-fill': !form.status }">
-              <option value="" disabled>Select…</option>
-              <option v-for="s in statuses" :key="s">{{ s }}</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
           <div class="form-group"><label>Company Stage</label>
             <select v-model="form.stage" :class="{ 'needs-fill': justExtracted && !form.stage }">
               <option value="">Unknown</option>
               <option v-for="st in stages" :key="st">{{ st }}</option>
             </select>
           </div>
-          <div class="form-group"><label>Date Applied</label><input type="date" v-model="form.appliedDate" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Status *</label>
+            <select v-model="form.status" :class="{ 'needs-fill': justExtracted && !form.status }">
+              <option value="" disabled>Select…</option>
+              <option v-for="s in dropdownStatuses" :key="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Date Applied</label><input type="date" v-model="form.appliedDate" @click="$event.target.showPicker && $event.target.showPicker()" /></div>
         </div>
         <div class="form-group"><label>Job Posting URL</label><input type="url" v-model="form.url" placeholder="https://…" /></div>
-        <div class="form-group"><label>Role Summary <span style="text-transform:none; font-weight:400; color:var(--muted)">— what the role entails (AI-filled, editable)</span></label><textarea v-model="form.summary" placeholder="- Lead product strategy for…&#10;- Partner with engineering on…" style="min-height:90px"></textarea></div>
-        <div class="form-group"><label>Role Notes</label><textarea v-model="form.roleNotes" placeholder="Why I'm excited about this role…"></textarea></div>
+        <div class="form-group"><label>Notes</label><textarea v-model="form.notes" placeholder="Anything to remember — why you're excited, prep, questions…"></textarea></div>
 
-        <div class="referral-block">
-          <div class="switch-row" @click="form.referral = !form.referral">
+        <div class="referral-block compact">
+          <label class="switch-row" @click="form.referral = !form.referral">
             <span class="switch" :class="{ on: form.referral }"></span>
-            <span class="switch-emoji">🤝</span> I have a referral for this role
-          </div>
-          <input v-if="form.referral" class="referrer-input" type="text" v-model="form.referrer" placeholder="Who referred you? (name)" />
+            <span class="switch-emoji">🤝</span> Referral
+          </label>
+          <input v-if="form.referral" class="referrer-input" type="text" v-model="form.referrer" placeholder="Who referred you?" />
         </div>
       </div>
       <div class="modal-footer">
@@ -758,7 +778,10 @@
             <span v-if="selectedJob.referral" class="ref-pill">🤝 Referral</span>
             <span v-if="isFollowUpDue(selectedJob)" class="followup-flag">🔔 Follow up due</span>
           </div>
-          <a v-if="selectedJob.url" :href="selectedJob.url" target="_blank" class="btn-view-posting">↗ View Job Posting</a>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px">
+            <a v-if="selectedJob.url" :href="selectedJob.url" target="_blank" class="btn-view-posting">↗ View Job Posting</a>
+            <button v-if="selectedJob.status === 'Offer'" class="btn-accept" @click="acceptOffer(selectedJob)">🎉 Accept Offer</button>
+          </div>
         </div>
         <div style="display:flex; gap:6px; align-items:center; flex-shrink:0">
           <button class="btn btn-secondary btn-sm" @click="openEditModal(selectedJob)">✎ Edit</button>
@@ -768,17 +791,17 @@
 
       <div class="detail-body">
 
-        <!-- Role Summary (most important — what the job is about) -->
-        <div class="role-summary-box">
-          <div class="sec-head" style="margin-bottom:8px">
-            <div class="detail-section-title" style="margin:0; color:var(--accent)">🎯 What this role is about</div>
+        <!-- Role Overview -->
+        <div>
+          <div class="detail-section-title sec-head">
+            <span>Role Overview</span>
             <button class="btn btn-ghost btn-sm" @click="generateSummary" :disabled="summaryLoading || !settings.openaiKey">
               <span v-if="summaryLoading" class="spinning">⟳</span><span v-else>✨</span>
               {{ summaryLoading ? 'Generating…' : (selectedJob.summary ? 'Regenerate' : 'Generate') }}
             </button>
           </div>
-          <div v-if="selectedJob.summary" class="role-summary" v-html="mdToHtml(selectedJob.summary)"></div>
-          <div v-else class="hint">No summary yet — add a job via paste/URL to auto-fill this, or click Generate.</div>
+          <div v-if="selectedJob.summary" class="info-card role-summary" v-html="mdToHtml(selectedJob.summary)"></div>
+          <div v-else class="hint">No overview yet — add a job via paste/URL to auto-fill this, or click Generate.</div>
         </div>
 
         <!-- Meta -->
@@ -796,19 +819,19 @@
           <div class="form-row keep-2">
             <div class="form-group">
               <label>Status</label>
-              <select v-model="selectedJob.status" :style="statusStyle(selectedJob.status)" class="status-select" @change="updateJobStatus"><option v-for="s in statuses" :key="s">{{ s }}</option></select>
+              <select v-model="selectedJob.status" @change="updateJobStatus"><option v-for="s in statusOptions(selectedJob)" :key="s">{{ s }}</option></select>
             </div>
             <div class="form-group">
               <label>Follow-up by</label>
-              <input type="date" v-model="selectedJob.followUpDate" @change="saveData" />
+              <input type="date" v-model="selectedJob.followUpDate" @change="saveData" @click="$event.target.showPicker && $event.target.showPicker()" />
             </div>
           </div>
-          <div class="referral-block">
-            <div class="switch-row" @click="toggleReferral(selectedJob)">
+          <div class="referral-block compact">
+            <label class="switch-row" @click="toggleReferral(selectedJob)">
               <span class="switch" :class="{ on: selectedJob.referral }"></span>
-              <span class="switch-emoji">🤝</span> I have a referral for this role
-            </div>
-            <input v-if="selectedJob.referral" class="referrer-input" type="text" v-model="selectedJob.referrer" @blur="saveData" placeholder="Who referred you? (name)" />
+              <span class="switch-emoji">🤝</span> Referral
+            </label>
+            <input v-if="selectedJob.referral" class="referrer-input" type="text" v-model="selectedJob.referrer" @blur="saveData" placeholder="Who referred you?" />
           </div>
         </div>
 
@@ -842,15 +865,10 @@
           <textarea v-show="expanded.companyNotes" v-model="companyData.notes" @blur="saveCompanyData" placeholder="What I think of this company, referrals, research…" style="width:100%; min-height:70px"></textarea>
         </div>
 
-        <!-- Role Notes -->
+        <!-- Notes -->
         <div>
-          <div class="detail-section-title sec-head">
-            <span>Role Notes</span>
-            <button class="collapse-toggle" @click="expanded.roleNotes = !expanded.roleNotes">
-              <span class="collapse-chevron" :class="{ open: expanded.roleNotes }">▸</span>{{ expanded.roleNotes ? 'Hide' : 'Show' }}
-            </button>
-          </div>
-          <textarea v-show="expanded.roleNotes" v-model="selectedJob.roleNotes" @blur="saveData" placeholder="Notes specific to this position…" style="width:100%; min-height:80px"></textarea>
+          <div class="detail-section-title">Notes</div>
+          <textarea v-model="selectedJob.notes" @blur="saveData" placeholder="Anything to remember — prep, questions to ask, impressions…" style="width:100%; min-height:90px"></textarea>
         </div>
 
         <!-- Key Contacts -->
@@ -889,12 +907,6 @@
             <div class="interview-who" v-if="iv.who">With: {{ iv.who }}</div>
             <div class="interview-notes" v-if="iv.notes">{{ iv.notes }}</div>
           </div>
-        </div>
-
-        <!-- Questions -->
-        <div>
-          <div class="detail-section-title">Questions to Ask Them</div>
-          <textarea v-model="selectedJob.questions" @blur="saveData" placeholder="What does success look like in year one?…" style="width:100%; min-height:80px"></textarea>
         </div>
 
         <!-- Activity Timeline -->
@@ -959,12 +971,39 @@
 
         <!-- Quick actions -->
         <div style="display:flex; gap:8px; flex-wrap:wrap">
-          <button class="btn btn-primary" @click="showStats = true">📊 Pipeline</button>
+          <button class="btn btn-primary" @click="showStats = true">📊 Analytics</button>
           <button class="btn btn-secondary" @click="cleanUpData" :disabled="stageBackfillRunning">
             <span v-if="stageBackfillRunning" class="spinning">⟳</span> 🧹 Clean Up Data
           </button>
         </div>
         <div class="hint">Clean Up standardizes salaries to $120K–$200K, trims locations to City, ST, and detects any missing company stages.</div>
+
+        <!-- Hunt management -->
+        <div class="manual-divider">Hunt</div>
+        <div class="hunt-current">
+          <div>
+            <div class="hunt-name">🎯 {{ currentHunt ? currentHunt.name : '—' }}</div>
+            <div class="hint" style="margin:2px 0 0" v-if="currentHunt">
+              Started {{ formatDate(new Date(currentHunt.startedAt).toISOString().slice(0,10)) }}
+              <span v-if="currentHunt.endedAt"> · ended {{ formatDate(new Date(currentHunt.endedAt).toISOString().slice(0,10)) }}</span>
+              · {{ jobs.length }} jobs
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" @click="exportCsv">⬇ CSV</button>
+            <button class="btn btn-secondary btn-sm" v-if="currentHunt && !currentHunt.endedAt" @click="endHunt">🏁 End Hunt</button>
+            <button class="btn btn-primary btn-sm" @click="startNewHunt">+ New Hunt</button>
+          </div>
+        </div>
+        <div v-if="huntList.length > 1" style="margin-top:8px">
+          <div class="hint" style="margin-bottom:4px">Switch Hunt</div>
+          <div v-for="h in huntList" :key="h.id" class="hunt-row" :class="{ active: h.id === activeHuntId }">
+            <span @click="switchHunt(h.id)" style="cursor:pointer; flex:1">
+              {{ h.name }} <span class="hint" style="margin:0">· {{ (h.jobs||[]).length }} jobs{{ h.endedAt ? ' · ended' : '' }}</span>
+            </span>
+            <button class="btn btn-ghost btn-sm" @click="deleteHunt(h.id)" title="Delete Hunt">🗑</button>
+          </div>
+        </div>
 
         <!-- Sync status -->
         <div class="manual-divider">Sync</div>
@@ -1030,7 +1069,7 @@
   <!-- ── PIPELINE MODAL ── -->
   <div class="modal-overlay" v-if="showStats" @click.self="showStats = false">
     <div class="modal" style="max-width:580px">
-      <div class="modal-header"><div class="modal-title">📊 Pipeline</div><button class="close-btn" @click="showStats = false">×</button></div>
+      <div class="modal-header"><div class="modal-title">📊 Hunt Analytics</div><button class="close-btn" @click="showStats = false">×</button></div>
       <div class="modal-body">
         <div class="stat-rates">
           <div class="rate-card"><div class="rate-num">{{ stats.responseRate }}%</div><div class="rate-label">Response</div></div>
@@ -1046,7 +1085,7 @@
             <div class="funnel-bar-wrap">
               <div class="funnel-bar" :style="{ width: (st.count / funnel.max * 100) + '%' }">{{ st.count }}</div>
             </div>
-            <div class="funnel-meta"><span>{{ st.label }}</span><span v-if="i>0" class="funnel-pct">{{ st.pct }}% →</span></div>
+            <div class="funnel-meta"><span>{{ st.label }}</span><span v-if="i>0" class="funnel-pct">{{ st.pct }}% of {{ funnel.steps[i-1].label.toLowerCase() }}</span></div>
           </div>
         </div>
 
@@ -1104,9 +1143,6 @@
     </div>
   </div>
 
-  <!-- Floating undo (appears when there's something to undo) -->
-  <button class="undo-fab" v-if="canUndo" @click="undo" title="Undo (⌘Z)">↩︎ Undo</button>
-
   <div class="toast" v-if="toast">
     <span>{{ toast }}</span>
     <button v-if="toastAction" class="toast-action" @click="runToastAction">{{ toastAction.label }}</button>
@@ -1119,9 +1155,11 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v13';
-    const jobs        = ref([]);
-    const companies   = reactive({});   // keyed by lowercased company name → { snapshot, notes }
+    const appVersion  = 'v14';
+    const jobs        = ref([]);        // active Hunt's jobs (working copy)
+    const companies   = reactive({});   // active Hunt's companies, keyed by lowercased name
+    const hunts       = reactive({});   // { id: { id, name, startedAt, endedAt, jobs, companies } }
+    const activeHuntId = ref('');
     const showAddModal = ref(false);
     const showSettings = ref(false);
     const showInterviewModal = ref(false);
@@ -1137,10 +1175,8 @@ createApp({
     const sortDir  = ref(-1);
     const editingJobId = ref(null);
     const justExtracted = ref(false);
-    const aiUrl = ref('');
-    const aiPasteText = ref('');
+    const aiInput = ref('');
     const aiLoading = ref(false);
-    const aiMode = ref('');
     const snapshotLoading = ref(false);
     const syncState = ref('ok');
     const toast = ref('');
@@ -1153,6 +1189,9 @@ createApp({
     let lastPull = 0;
 
     const statuses = ['Interested','Applied','Interviewing','Offer','Accepted','Rejected'];
+    // "Accepted" isn't directly selectable — you reach it via the celebratory "Accept Offer" button
+    const dropdownStatuses = ['Interested','Applied','Interviewing','Offer','Rejected'];
+    function statusOptions(job) { return job && job.status === 'Accepted' ? statuses : dropdownStatuses; }
     const stages   = ['Early Startup','Mature Startup','Mid-Size Private','Public Company','Mega-Cap'];
     const workTypes = ['Remote','Hybrid','In-Office'];
 
@@ -1170,19 +1209,19 @@ createApp({
     const lastSync = ref('');
 
     const settings = reactive({
-      openaiKey: '', githubToken: '', githubUser: '', githubRepo: '', tokenExpiry: '', urlMode: 'quick'
+      openaiKey: '', githubToken: '', githubUser: '', githubRepo: '', tokenExpiry: ''
     });
 
     const form = reactive({
       company:'', title:'', location:'', workType:'', salary:'',
-      status:'', url:'', appliedDate: today(), roleNotes:'', referral: false, referrer: '',
+      status:'', url:'', appliedDate: today(), notes:'', referral: false, referrer: '',
       stage: '', summary: ''
     });
     const interviewForm = reactive({ round:'Phone Screen', date: today(), who:'', notes:'' });
     const contactForm   = reactive({ name:'', role:'', contact:'', notes:'' });
 
     // ── Helpers ──
-    function today() { return new Date().toISOString().slice(0,10); }
+    function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
     function ckey(name) { return (name||'').trim().toLowerCase(); }
     function formatDate(d) {
@@ -1391,6 +1430,10 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
         if (!j.createdAt) j.createdAt = Date.now() - (n - i) * 1000; // earlier rows = older
         if (j.status === 'Interested') j.appliedDate = '';            // Interested has no applied date
         delete j.dream;                                               // Dream removed
+        if (j.notes === undefined) {                                  // merge Role Notes + Questions → Notes
+          j.notes = [j.roleNotes, j.questions].filter(Boolean).join('\n\n');
+          delete j.roleNotes; delete j.questions;
+        }
         // Normalize activity log to the new, consistent phrasing; keep only process events
         if (Array.isArray(j.activity)) {
           j.activity = j.activity.map(a => {
@@ -1447,20 +1490,24 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
       const submitted = jobs.value.filter(j => j.status !== 'Interested' && j.appliedDate);
       const period = statsPeriod.value;
       const buckets = [];
-      const now = new Date();
+      // Local YYYY-MM-DD (no UTC drift)
+      const lkey = (dt) => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const mkey = (dt) => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+      const weekStart = (dt) => { const o = new Date(dt); o.setHours(12,0,0,0); o.setDate(o.getDate() - o.getDay()); return o; };
       const keyFor = (d) => {
         const dt = new Date(d + 'T12:00:00');
-        if (period === 'week') { const o = new Date(dt); o.setDate(o.getDate() - o.getDay()); return o.toISOString().slice(0,10); }
-        if (period === 'month') return dt.toISOString().slice(0,7);
-        return dt.toISOString().slice(0,10); // day
+        if (period === 'week') return lkey(weekStart(dt));
+        if (period === 'month') return mkey(dt);
+        return lkey(dt);
       };
+      const now = new Date(); now.setHours(12,0,0,0);
       const n = period === 'day' ? 14 : period === 'week' ? 10 : 6;
       for (let i = n - 1; i >= 0; i--) {
         const d = new Date(now);
         let label, key;
-        if (period === 'day') { d.setDate(d.getDate() - i); key = d.toISOString().slice(0,10); label = d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}); }
-        else if (period === 'week') { d.setDate(d.getDate() - d.getDay() - i*7); key = d.toISOString().slice(0,10); label = d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}); }
-        else { d.setMonth(d.getMonth() - i); key = d.toISOString().slice(0,7); label = d.toLocaleDateString('en-US',{month:'short'}); }
+        if (period === 'day') { d.setDate(d.getDate() - i); key = lkey(d); label = d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}); }
+        else if (period === 'week') { const ws = weekStart(now); ws.setDate(ws.getDate() - i*7); key = lkey(ws); label = ws.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}); }
+        else { d.setMonth(d.getMonth() - i); key = mkey(d); label = d.toLocaleDateString('en-US',{month:'short'}); }
         buckets.push({ key, label, count: 0 });
       }
       const idx = {}; buckets.forEach((b,i)=> idx[b.key]=i);
@@ -1493,6 +1540,19 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
     });
 
     const hasActiveFilters = computed(() => !!(searchQuery.value || filterWorkType.value || filterStage.value || filterStarred.value) || filterStatus.value !== 'active' || sortKey.value !== 'createdAt' || sortDir.value !== -1);
+
+    const emptyMessage = computed(() => {
+      if (!jobs.value.length) return { icon:'🎯', title:'No jobs yet', sub:'Add your first job to start this Hunt.' };
+      const msgs = {
+        Offer:        { icon:'💪', title:'No offers yet', sub:'Keep going — your hard work will pay off.' },
+        Interviewing: { icon:'📞', title:'No interviews yet', sub:'Hang in there, they’re coming.' },
+        Applied:      { icon:'📨', title:'Nothing in Applied', sub:'Time to send a few out?' },
+        Interested:   { icon:'👀', title:'Watchlist is empty', sub:'Add roles you’re keeping an eye on.' },
+        Rejected:     { icon:'🌱', title:'No rejections here', sub:'Onward and upward.' },
+        active:       { icon:'✅', title:'No active jobs', sub:'Nothing in flight right now.' }
+      };
+      return msgs[filterStatus.value] || { icon:'🔍', title:'No matching jobs', sub:'Try clearing a filter.' };
+    });
 
     // ── Token expiry ──
     const tokenExpiringSoon = computed(() => {
@@ -1530,6 +1590,8 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
         return matchQ && matchS && matchW && matchStage && matchStar;
       });
       return [...list].sort((a,b) => {
+        // Accepted (you got the job!) always sticks to the top
+        if ((a.status === 'Accepted') !== (b.status === 'Accepted')) return a.status === 'Accepted' ? -1 : 1;
         let av, bv;
         if (sortKey.value === 'salary') { av = salaryValue(a.salary); bv = salaryValue(b.salary); }
         else { av = a[sortKey.value] || ''; bv = b[sortKey.value] || ''; }
@@ -1539,20 +1601,20 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
 
     // ── Add / Edit / Save Job ──
     function openAddModal() {
-      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'', url:'', appliedDate:'', roleNotes:'', referral: false, referrer: '', stage:'', summary:'' });
+      Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'', url:'', appliedDate:'', notes:'', referral: false, referrer: '', stage:'', summary:'' });
       editingJobId.value = null; justExtracted.value = false;
-      aiUrl.value = ''; aiPasteText.value = '';
+      aiInput.value = '';
       showAddModal.value = true;
     }
     function openEditModal(job) {
       Object.assign(form, {
         company: job.company, title: job.title, location: job.location, workType: job.workType,
         salary: job.salary, status: job.status, url: job.url, appliedDate: job.appliedDate || '',
-        roleNotes: job.roleNotes || '', referral: !!job.referral, referrer: job.referrer || '',
+        notes: job.notes || '', referral: !!job.referral, referrer: job.referrer || '',
         stage: job.stage || '', summary: job.summary || ''
       });
       editingJobId.value = job.id; justExtracted.value = false;
-      selectedJob.value = null;   // close the detail panel so the edit modal isn't hidden behind it
+      // keep the detail panel open behind; the edit modal sits above it (see z-index) so Save/Cancel returns to the job
       showAddModal.value = true;
     }
     function saveJob() {
@@ -1566,7 +1628,7 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
         company: form.company.trim(), title: form.title.trim(),
         location: normalizeLocation(form.location.trim()), workType: form.workType,
         salary: normalizeSalary(form.salary.trim()), status: form.status,
-        url: form.url.trim(), appliedDate, roleNotes: form.roleNotes.trim(),
+        url: form.url.trim(), appliedDate, notes: form.notes.trim(),
         referral: form.referral, referrer: form.referral ? form.referrer.trim() : '',
         stage: form.stage, summary: form.summary || '',
         updatedDate: today()
@@ -1611,6 +1673,36 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
     }
     function updateJobStatus() { pushUndo(); applyStatusChange(selectedJob.value); }
     function onInlineStatus(job) { pushUndo(); applyStatusChange(job); }
+
+    // 🎉 Accept an offer — celebrate, mark Accepted, pin to top
+    function acceptOffer(job) {
+      pushUndo();
+      job.status = 'Accepted';
+      job.updatedDate = today();
+      logActivity(job, `Accepted the offer 🎉`);
+      saveData();
+      fireConfetti();
+      showToast('🎉 Congratulations — you got the job! Time to celebrate.', 6000);
+      setTimeout(() => { if (confirm('Want to wrap up this Hunt? You can always start a new one later.')) endHunt(); }, 1200);
+    }
+    function fireConfetti() {
+      const colors = ['#f5792e','#7fae3a','#d6b13a','#e88066','#9fce5a','#f4f1e6'];
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden';
+      document.body.appendChild(wrap);
+      for (let i = 0; i < 120; i++) {
+        const c = document.createElement('div');
+        const size = 6 + Math.random()*8;
+        c.style.cssText = `position:absolute;top:-20px;left:${Math.random()*100}%;width:${size}px;height:${size*0.6}px;background:${colors[i%colors.length]};opacity:0.95;border-radius:2px;transform:rotate(${Math.random()*360}deg)`;
+        const dur = 2200 + Math.random()*1800, drift = (Math.random()-0.5)*240;
+        c.animate([
+          { transform:`translate(0,0) rotate(0deg)`, opacity:1 },
+          { transform:`translate(${drift}px, ${window.innerHeight+60}px) rotate(${720+Math.random()*360}deg)`, opacity:0.9 }
+        ], { duration: dur, easing:'cubic-bezier(.2,.6,.4,1)' });
+        wrap.appendChild(c);
+      }
+      setTimeout(() => wrap.remove(), 4200);
+    }
     function deleteJob() {
       pushUndo();
       jobs.value = jobs.value.filter(j => j.id !== selectedJob.value.id);
@@ -1727,16 +1819,6 @@ ${text.slice(0,6500)}`;
       return ta.value.replace(/\s+/g, ' ').trim();
     }
 
-    async function extractFromText() {
-      if (!settings.openaiKey || !aiPasteText.value.trim()) return;
-      aiLoading.value = true; aiMode.value = 'text';
-      try {
-        applyExtracted(await parseJobText(aiPasteText.value));
-        showToast('✨ Details extracted!');
-      } catch(e) { showToast('⚠️ Extraction failed: ' + e.message, 4000); }
-      aiLoading.value = false; aiMode.value = '';
-    }
-
     // Responses API w/ web search
     function responsesText(data) {
       if (data.output_text) return data.output_text;
@@ -1749,23 +1831,17 @@ ${text.slice(0,6500)}`;
       return out;
     }
 
-    async function extractFromUrl() {
-      if (!settings.openaiKey || !aiUrl.value.trim()) return;
-      const url = aiUrl.value.trim();
-      aiLoading.value = true; aiMode.value = 'url';
+    // ✨ Autofill — one box: paste a URL or JD text (or both). Detects which, makes one call.
+    async function autofill() {
+      if (!settings.openaiKey || !aiInput.value.trim()) return;
+      const input = aiInput.value.trim();
+      const urlMatch = input.match(/https?:\/\/[^\s]+/);
+      const url = urlMatch ? urlMatch[0] : '';
+      const isJustUrl = url && input.replace(url, '').trim().length < 12;
+      aiLoading.value = true;
       try {
-        if (!form.url) form.url = url;
-        if (settings.urlMode === 'quick') {
-          // Low-cost: fetch page via CORS proxy, then parse text with gpt-4o-mini
-          const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-          const r = await fetch(proxy);
-          const j = await r.json();
-          const text = stripHtml(j.contents || '');
-          if (text.length < 120) throw new Error('Page had no readable text (likely login-gated or JS-only)');
-          applyExtracted(await parseJobText(text));
-          showToast('⚡ Pulled via Quick Fetch!');
-        } else {
-          // Higher-cost: OpenAI web search
+        if (url && !form.url) form.url = url;
+        if (isJustUrl) {
           const prompt = `Look up this job posting online: ${url}
 Find the company name, job title, location, work type (Remote/Hybrid/In-Office), salary range, and company stage.
 For salary, assume USD — format like "$120k–$150k", no currency code.
@@ -1782,40 +1858,55 @@ Return ONLY valid JSON (no markdown, no commentary):
           if (data.error) throw new Error(data.error.message);
           logApi('URL web search', 'gpt-4o', data.usage, true);
           applyExtracted(JSON.parse(stripJson(responsesText(data))));
-          showToast('🌐 Pulled via Web Search!');
+          showToast('✨ Filled from the posting!');
+        } else {
+          applyExtracted(await parseJobText(input));
+          showToast('✨ Filled from the text!');
         }
       } catch(e) {
-        const tip = settings.urlMode === 'quick' ? ' Try switching to Web Search, or paste the text.' : ' Try pasting the text instead.';
-        showToast('⚠️ Could not read that URL.' + tip + ' (' + e.message + ')', 5500);
+        showToast('⚠️ Autofill failed — try pasting the job text instead. (' + e.message + ')', 5500);
       }
-      aiLoading.value = false; aiMode.value = '';
+      aiLoading.value = false;
     }
 
-    async function fetchSnapshot() {
-      if (!settings.openaiKey || !selectedJob.value) return;
-      snapshotLoading.value = true;
-      try {
-        const prompt = `Give a current company snapshot for "${selectedJob.value.company}" using up-to-date web information. Use short markdown bullets, each starting with a **bold label**. Do NOT include an "as of [date]" line and do NOT add a closing disclaimer — just the bullets. Cover:
+    async function fetchCompanyProfile(name) {
+      if (!settings.openaiKey || !name) return;
+      const prompt = `Give a current company snapshot for "${name}" using up-to-date web information. Use short markdown bullets, each starting with a **bold label**. Do NOT include an "as of [date]" line and do NOT add a closing disclaimer — just the bullets. Cover:
 - **Size:** approximate headcount
 - **Stage / market cap:** funding stage if a startup, or market cap if public
 - **Industry:** what they do
 - **Culture & employee sentiment:** the most detailed section (3–5 sentences). Pull from current and former employees across Glassdoor, Blind, Reddit and reviews — overall rating, what people genuinely like, the most common complaints/concerns, work-life balance, management quality, compensation, and any patterns in recent reviews.
 - **Recent news:** notable items worth knowing
 If unsure on a point, say so briefly.`;
-        const res = await fetch('https://api.openai.com/v1/responses', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
-          body: JSON.stringify({ model:'gpt-4o', tools:[{type:'web_search_preview'}], input: prompt })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        logApi('Company insights', 'gpt-4o', data.usage, true);
-        const k = ckey(selectedJob.value.company);
-        if (!companies[k]) companies[k] = { snapshot:'', notes:'' };
-        companies[k].snapshot = responsesText(data).trim();
-        saveData(); showToast('✨ Company profile loaded');
-      } catch(e) { showToast('⚠️ Snapshot failed: ' + e.message, 4000); }
+      const res = await fetch('https://api.openai.com/v1/responses', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
+        body: JSON.stringify({ model:'gpt-4o', tools:[{type:'web_search_preview'}], input: prompt })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      logApi('Company insights', 'gpt-4o', data.usage, true);
+      const k = ckey(name);
+      if (!companies[k]) companies[k] = { snapshot:'', notes:'' };
+      companies[k].snapshot = responsesText(data).trim();
+      saveData();
+    }
+    async function fetchSnapshot() {
+      if (!selectedJob.value) return;
+      snapshotLoading.value = true;
+      try { await fetchCompanyProfile(selectedJob.value.company); showToast('✨ Company profile loaded'); }
+      catch(e) { showToast('⚠️ Snapshot failed: ' + e.message, 4000); }
       snapshotLoading.value = false;
+    }
+    // Company profile in the Add-Job form
+    const formProfileLoading = ref(false);
+    const formCompanyProfile = computed(() => { const c = companies[ckey(form.company)]; return c ? c.snapshot : ''; });
+    async function genFormProfile() {
+      if (!form.company.trim()) { showToast('Enter the company name first'); return; }
+      formProfileLoading.value = true;
+      try { await fetchCompanyProfile(form.company.trim()); showToast('✨ Company profile generated'); }
+      catch(e) { showToast('⚠️ Failed: ' + e.message, 4000); }
+      formProfileLoading.value = false;
     }
 
     // Generate the role summary for an existing job (uses its URL if present, else web search)
@@ -1860,7 +1951,7 @@ If unsure on a point, say so briefly.`;
 
     // ── Export / Import ──
     function exportJson() {
-      const blob = new Blob([JSON.stringify({ jobs: jobs.value, companies }, null, 2)], { type:'application/json' });
+      const blob = new Blob([JSON.stringify(payload(), null, 2)], { type:'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = `job-hunter-backup-${today()}.json`; a.click();
@@ -1876,13 +1967,8 @@ If unsure on a point, say so briefly.`;
       reader.onload = () => {
         try {
           const data = JSON.parse(reader.result);
-          const newJobs = Array.isArray(data) ? data : (data.jobs || []);
-          const newCompanies = (!Array.isArray(data) && data.companies) ? data.companies : {};
-          if (!confirm(`Restore ${newJobs.length} job(s) from this backup? This replaces what's currently in the app.`)) { e.target.value = ''; return; }
-          jobs.value = newJobs;
-          Object.keys(companies).forEach(k => delete companies[k]);
-          Object.assign(companies, newCompanies);
-          normalizeStatuses();
+          if (!confirm(`Restore this backup? It replaces everything currently in the app.`)) { e.target.value = ''; return; }
+          loadFromData(data);
           saveData();
           showToast('⬆ Backup restored!');
         } catch(err) { showToast('⚠️ Could not read that file: ' + err.message, 4500); }
@@ -1895,7 +1981,86 @@ If unsure on a point, say so briefly.`;
     function githubApiUrl() {
       return `https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}/contents/jobs.json`;
     }
-    function payload() { return { jobs: jobs.value, companies, meta: { tokenExpiry: settings.tokenExpiry, apiLog: apiLog.value.slice(-1500) } }; }
+    // ── Hunts (job-search sessions) ──
+    function newHuntId() { return 'hunt-' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+    function syncActiveIntoHunts() {
+      const h = hunts[activeHuntId.value];
+      if (h) { h.jobs = jobs.value; h.companies = JSON.parse(JSON.stringify(companies)); }
+    }
+    function setActiveLive() {
+      const h = hunts[activeHuntId.value];
+      jobs.value = h ? (h.jobs || []) : [];
+      Object.keys(companies).forEach(k => delete companies[k]);
+      Object.assign(companies, (h && h.companies) || {});
+      normalizeStatuses();
+    }
+    // Load either the new {hunts} format or legacy {jobs,companies}/array
+    function loadFromData(data) {
+      if (data && data.hunts && Object.keys(data.hunts).length) {
+        Object.keys(hunts).forEach(k => delete hunts[k]);
+        Object.assign(hunts, data.hunts);
+        activeHuntId.value = (data.activeHunt && hunts[data.activeHunt]) ? data.activeHunt : Object.keys(hunts)[0];
+      } else {
+        const jobsArr = Array.isArray(data) ? data : (data && data.jobs) || [];
+        const co = (data && !Array.isArray(data) && data.companies) || {};
+        const id = newHuntId();
+        Object.keys(hunts).forEach(k => delete hunts[k]);
+        hunts[id] = { id, name: 'Hunt 1', startedAt: Date.now(), endedAt: null, jobs: jobsArr, companies: co };
+        activeHuntId.value = id;
+      }
+      setActiveLive();
+      if (data && data.meta) {
+        if (data.meta.tokenExpiry && !settings.tokenExpiry) { settings.tokenExpiry = data.meta.tokenExpiry; persistSettings(); }
+        if (data.meta.apiLog) mergeApiLog(data.meta.apiLog);
+      }
+    }
+    const currentHunt = computed(() => hunts[activeHuntId.value] || null);
+    const huntList = computed(() => Object.values(hunts).sort((a,b) => (b.startedAt||0) - (a.startedAt||0)));
+    function startNewHunt() {
+      const name = (prompt('Name this new Hunt:', 'Hunt ' + (Object.keys(hunts).length + 1)) || '').trim();
+      if (name === null) return;
+      pushUndo(); syncActiveIntoHunts();
+      const id = newHuntId();
+      hunts[id] = { id, name: name || ('Hunt ' + (Object.keys(hunts).length + 1)), startedAt: Date.now(), endedAt: null, jobs: [], companies: {} };
+      activeHuntId.value = id; setActiveLive();
+      clearFilters(); selectedJob.value = null;
+      saveData(); showToast('🎯 New Hunt started — good luck!');
+    }
+    function switchHunt(id) {
+      if (id === activeHuntId.value) return;
+      syncActiveIntoHunts();
+      activeHuntId.value = id; setActiveLive();
+      clearFilters(); selectedJob.value = null;
+      saveData(); showToast('Switched to “' + (hunts[id]?.name || 'Hunt') + '”');
+    }
+    function endHunt() {
+      const h = hunts[activeHuntId.value]; if (!h) return;
+      h.endedAt = Date.now();
+      syncActiveIntoHunts(); saveData();
+      showToast('🏁 Hunt wrapped up. Your records are saved — start a new one whenever you’re ready.', 6000);
+    }
+    function deleteHunt(id) {
+      if (Object.keys(hunts).length <= 1) { showToast('Can’t delete your only Hunt'); return; }
+      if (!confirm('Delete this Hunt and all its jobs permanently?')) return;
+      pushUndo();
+      delete hunts[id];
+      if (activeHuntId.value === id) { activeHuntId.value = Object.keys(hunts)[0]; setActiveLive(); }
+      saveData(); showToast('Hunt deleted');
+    }
+    function exportCsv() {
+      syncActiveIntoHunts();
+      const cols = ['Company','Job Title','Status','Location','Salary','Work Type','Stage','Applied','Referral','URL'];
+      const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+      const rows = jobs.value.map(j => [j.company, j.title, j.status, j.location, j.salary, j.workType, j.stage, j.appliedDate, j.referral ? (j.referrer||'yes') : '', j.url].map(esc).join(','));
+      const csv = cols.map(esc).join(',') + '\n' + rows.join('\n');
+      const blob = new Blob([csv], { type:'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${(currentHunt.value?.name||'hunt').replace(/\s+/g,'-')}-${today()}.csv`; a.click();
+      URL.revokeObjectURL(url); showToast('⬇ CSV exported');
+    }
+
+    function payload() { syncActiveIntoHunts(); return { activeHunt: activeHuntId.value, hunts, meta: { tokenExpiry: settings.tokenExpiry, apiLog: apiLog.value.slice(-1500) } }; }
 
     // Merge a remote API log into the local one (dedupe by id) so usage aggregates across devices
     function mergeApiLog(remote) {
@@ -1915,20 +2080,9 @@ If unsure on a point, say so briefly.`;
         const data = await res.json();
         githubFileSha.value = data.sha;
         const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
-        if (Array.isArray(decoded)) { jobs.value = decoded; }
-        else {
-          jobs.value = decoded.jobs || [];
-          Object.keys(companies).forEach(k => delete companies[k]);
-          Object.assign(companies, decoded.companies || {});
-          // Sync the (non-secret) token expiry date to new devices
-          if (decoded.meta && decoded.meta.tokenExpiry && !settings.tokenExpiry) {
-            settings.tokenExpiry = decoded.meta.tokenExpiry; persistSettings();
-          }
-          if (decoded.meta && decoded.meta.apiLog) mergeApiLog(decoded.meta.apiLog);
-        }
-        normalizeStatuses();
+        loadFromData(decoded);
         syncState.value = 'ok'; updateBadge(); markSynced();
-        showToast('🔄 Data pulled from GitHub');
+        showToast('🔄 Synced');
       } catch(e) { syncState.value = 'error'; showToast('⚠️ Pull failed: ' + e.message, 4000); }
     }
 
@@ -1979,8 +2133,9 @@ If unsure on a point, say so briefly.`;
 
     // ── Persist ──
     function saveData() {
-      localStorage.setItem('jh_jobs', JSON.stringify(jobs.value));
-      localStorage.setItem('jh_companies', JSON.stringify(companies));
+      syncActiveIntoHunts();
+      localStorage.setItem('jh_hunts', JSON.stringify(hunts));
+      localStorage.setItem('jh_active', activeHuntId.value);
       localStorage.setItem('jh_apilog', JSON.stringify(apiLog.value));
       updateBadge();
       pushToGithub();
@@ -1995,14 +2150,17 @@ If unsure on a point, say so briefly.`;
     // ── Init ──
     onMounted(async () => {
       loadSettings();
-      const localJobs = localStorage.getItem('jh_jobs');
-      if (localJobs) jobs.value = JSON.parse(localJobs);
-      normalizeStatuses();
-      const localCo = localStorage.getItem('jh_companies');
-      if (localCo) Object.assign(companies, JSON.parse(localCo));
       const localApi = localStorage.getItem('jh_apilog');
       if (localApi) { try { apiLog.value = JSON.parse(localApi); } catch(e){} }
       lastSync.value = Number(localStorage.getItem('jh_lastSync')) || '';
+      // Load Hunts (new) or migrate legacy local data
+      const localHunts = localStorage.getItem('jh_hunts');
+      if (localHunts) {
+        loadFromData({ hunts: JSON.parse(localHunts), activeHunt: localStorage.getItem('jh_active') });
+      } else {
+        const lj = localStorage.getItem('jh_jobs'), lc = localStorage.getItem('jh_companies');
+        loadFromData({ jobs: lj ? JSON.parse(lj) : [], companies: lc ? JSON.parse(lc) : {} });
+      }
       if (settings.githubToken) await pullFromGithub();
       seedHistory();   // backfill pre-v11 usage once (deduped by fixed ids)
       updateBadge();
@@ -2028,16 +2186,17 @@ If unsure on a point, say so briefly.`;
 
     return {
       appVersion, jobs, companies, statuses, stages, workTypes, showAddModal, showSettings, showInterviewModal, showContactModal, showStats, showSpend, stats, spend, overTime, statsPeriod, money, funnel,
-      selectedJob, searchQuery, filterStatus, filterWorkType, filterStage, filterStarred, sortKey, sortDir, filteredJobs, hasActiveFilters, ACTIVE_STATUSES,
-      aiUrl, aiPasteText, aiLoading, aiMode, snapshotLoading, summaryLoading, syncState, toast, toastAction, runToastAction, settings, lastSyncText,
+      selectedJob, searchQuery, filterStatus, filterWorkType, filterStage, filterStarred, sortKey, sortDir, filteredJobs, hasActiveFilters, emptyMessage, ACTIVE_STATUSES,
+      aiInput, aiLoading, snapshotLoading, summaryLoading, syncState, toast, toastAction, runToastAction, settings, lastSyncText,
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
-      showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus,
+      showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus, dropdownStatuses, statusOptions,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
       clearFilters, toggleTile, cleanUpData, stageBackfillRunning, manualSync, canUndo, undo, redo,
-      editingJobId, editingContactIdx, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob,
+      currentHunt, huntList, activeHuntId, startNewHunt, switchHunt, endHunt, deleteHunt, exportCsv,
+      editingJobId, editingContactIdx, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob, acceptOffer,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, openEditContact, saveContact, deleteContact, saveCompanyData, generateSummary,
-      extractFromText, extractFromUrl, fetchSnapshot, exportJson, importInput, triggerImport, importJson,
+      autofill, fetchSnapshot, formProfileLoading, formCompanyProfile, genFormProfile, exportJson, importInput, triggerImport, importJson,
       pullFromGithub, pushToGithub, testGithub, saveData, saveSettings
     };
   }
