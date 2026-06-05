@@ -35,35 +35,28 @@
       --shadow:    0 4px 24px rgba(0,0,0,0.55);
     }
 
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       font-size: 14px;
+      -webkit-text-size-adjust: 100%;
     }
 
-    /* Tiling camo texture behind the header (soft-edged blobs that repeat seamlessly) */
+    /* Real camo header image (cover, with a dark gradient overlay for legibility) */
     .app-header {
       position: sticky; top: 0; z-index: 100;
-      background-color: #232b15;
-      background-image:
-        radial-gradient(ellipse 64px 48px at 34px 38px,  rgba(120,138,60,0.55), transparent 68%),
-        radial-gradient(ellipse 80px 56px at 150px 24px, rgba(38,46,18,0.85),   transparent 68%),
-        radial-gradient(ellipse 58px 44px at 104px 134px,rgba(104,120,52,0.50), transparent 68%),
-        radial-gradient(ellipse 72px 54px at 232px 112px,rgba(30,38,14,0.85),   transparent 68%),
-        radial-gradient(ellipse 54px 42px at 24px 150px, rgba(92,108,46,0.48),  transparent 68%),
-        radial-gradient(ellipse 46px 36px at 190px 150px,rgba(64,76,30,0.70),   transparent 68%),
-        radial-gradient(ellipse 40px 32px at 120px 70px, rgba(140,156,72,0.30), transparent 70%);
-      background-size: 260px 180px;
-      background-repeat: repeat;
+      background-image: linear-gradient(90deg, rgba(10,12,6,0.78), rgba(10,12,6,0.45) 55%, rgba(10,12,6,0.55)), url("header.png");
+      background-size: cover; background-position: center;
       border-bottom: 1px solid var(--border);
       padding: 14px 20px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-img { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
+    .logo { display: flex; align-items: center; gap: 11px; }
+    .logo-img { width: 34px; height: 34px; filter: drop-shadow(0 0 7px rgba(245,121,46,0.65)) drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 1px 5px rgba(0,0,0,0.85); }
     .logo-text span { color: var(--accent); }
 
     .header-actions { display: flex; gap: 8px; align-items: center; }
@@ -238,15 +231,8 @@
       padding: 18px 20px; border-bottom: 1px solid var(--border);
       display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
       position: sticky; top: 0; z-index: 10;
-      background-color: #232b15;
-      background-image:
-        radial-gradient(ellipse 64px 48px at 34px 38px,  rgba(120,138,60,0.50), transparent 68%),
-        radial-gradient(ellipse 80px 56px at 150px 24px, rgba(38,46,18,0.80),   transparent 68%),
-        radial-gradient(ellipse 58px 44px at 104px 134px,rgba(104,120,52,0.45), transparent 68%),
-        radial-gradient(ellipse 72px 54px at 232px 112px,rgba(30,38,14,0.80),   transparent 68%),
-        radial-gradient(ellipse 54px 42px at 24px 150px, rgba(92,108,46,0.42),  transparent 68%),
-        radial-gradient(ellipse 46px 36px at 190px 150px,rgba(64,76,30,0.65),   transparent 68%);
-      background-size: 260px 180px; background-repeat: repeat;
+      background-image: linear-gradient(180deg, rgba(10,12,6,0.72), rgba(10,12,6,0.6)), url("header.png");
+      background-size: cover; background-position: center;
     }
     .btn-view-posting {
       display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
@@ -317,7 +303,10 @@
 
     /* Prevent iOS zoom-on-focus (text inputs must be >=16px on mobile) */
     @media (max-width: 640px) {
-      input[type="text"], input[type="url"], input[type="date"], input[type="password"], textarea { font-size: 16px; }
+      input[type="text"], input[type="url"], input[type="date"], input[type="password"], textarea,
+      .search-wrap input[type="text"] { font-size: 16px; }
+      /* date inputs must never overflow their column */
+      input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
     }
     /* Open-posting link in table row */
     .row-link { color: var(--muted); display: inline-flex; align-items: center; opacity: 0.6; }
@@ -408,7 +397,8 @@
 
     /* Clickable stat tiles */
     .stat-card { cursor: pointer; transition: border-color 0.12s, transform 0.08s; }
-    .stat-card:hover { border-color: var(--muted); }
+    @media (hover: hover) { .stat-card:hover { border-color: var(--muted); } }
+    .stat-card:focus { outline: none; }
     .stat-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 
     /* Stage tag + dream/referral row tags */
@@ -417,17 +407,12 @@
     .dream-mini { font-size: 10px; color: var(--yellow); background: rgba(214,177,58,0.18); padding: 1px 7px; border-radius: 10px; margin-top: 4px; display: inline-block; }
     .dream-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(214,177,58,0.22); color: var(--yellow); white-space: nowrap; }
 
-    /* Modal header camo (consistent with main + detail headers) */
+    /* Modal header camo (same image as the main + detail headers) */
     .modal-header {
-      background-color: #232b15;
-      background-image:
-        radial-gradient(ellipse 64px 48px at 34px 30px,  rgba(120,138,60,0.42), transparent 68%),
-        radial-gradient(ellipse 80px 56px at 180px 16px, rgba(38,46,18,0.75),   transparent 68%),
-        radial-gradient(ellipse 58px 44px at 320px 44px, rgba(104,120,52,0.38), transparent 68%),
-        radial-gradient(ellipse 50px 38px at 110px 60px, rgba(64,76,30,0.55),   transparent 70%);
-      background-size: 360px 80px; background-repeat: repeat;
+      background-image: linear-gradient(180deg, rgba(10,12,6,0.74), rgba(10,12,6,0.62)), url("header.png");
+      background-size: cover; background-position: center;
     }
-    .modal-title { text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+    .modal-title { text-shadow: 0 1px 5px rgba(0,0,0,0.85); }
 
     /* Period toggle + over-time chart */
     .period-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -530,6 +515,41 @@
     .hunt-name { font-weight: 700; font-size: 14px; }
     .hunt-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; font-size: 13px; }
     .hunt-row.active { border-color: var(--accent); background: rgba(245,121,46,0.08); }
+
+    /* Combined Filters dropdown */
+    .filter-dd-wrap { position: relative; }
+    .filter-badge { background: var(--accent); color: #1a1206; border-radius: 10px; padding: 0 6px; font-size: 11px; font-weight: 700; }
+    .filter-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 50; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; width: 290px; max-width: 92vw; display: flex; flex-direction: column; gap: 12px; }
+    .filter-grp-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .opt-chip { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 16px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+    .opt-chip:hover { color: var(--text); border-color: var(--muted); }
+    .opt-chip.on { background: var(--accent); color: #1a1206; border-color: transparent; font-weight: 600; }
+    .chip-clear.disabled { opacity: 0.4; cursor: default; }
+
+    /* Mobile card view */
+    .card-list { display: none; }
+    .job-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+    .job-card:active { background: var(--surface2); }
+    .card-top { display: flex; align-items: flex-start; gap: 10px; }
+    .card-title { font-weight: 700; font-size: 15px; line-height: 1.25; }
+    .card-top .company-cell { margin-top: 2px; }
+    .card-top .badge { flex-shrink: 0; }
+    .card-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px; font-size: 12px; color: var(--muted); align-items: center; }
+    .card-tags { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+    .card-accepted { border-color: var(--green); box-shadow: inset 3px 0 0 var(--green); }
+    @media (max-width: 640px) {
+      .table-wrap { display: none; }
+      .card-list { display: flex; flex-direction: column; gap: 10px; }
+    }
+
+    /* Salary box-and-whisker */
+    .boxplot-track { position: relative; height: 34px; margin: 8px 6px; }
+    .boxplot-whisker { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: var(--border); transform: translateY(-50%); }
+    .boxplot-box { position: absolute; top: 7px; bottom: 7px; background: rgba(245,121,46,0.22); border: 1px solid var(--accent); border-radius: 4px; }
+    .boxplot-median { position: absolute; top: 4px; bottom: 4px; width: 3px; background: var(--accent); border-radius: 2px; transform: translateX(-1px); }
+    .boxplot-cap { position: absolute; top: 9px; bottom: 9px; width: 2px; background: var(--muted); }
+    .boxplot-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin: 2px 6px 6px; }
   </style>
 </head>
 <body>
@@ -538,7 +558,7 @@
   <!-- ── HEADER ── -->
   <header class="app-header">
     <div class="logo">
-      <img src="appicon.png" alt="Job Hunter" class="logo-img" />
+      <img src="crosshairs.png" alt="Job Hunter" class="logo-img" />
       <span class="logo-text">Job <span>Hunter</span></span>
     </div>
     <div class="header-actions">
@@ -574,9 +594,9 @@
 
     <!-- Stats (click to filter; Active is the default view) -->
     <div class="stats-grid">
-      <div class="stat-card" :class="{ active: filterStatus==='active' }" @click="toggleTile('active')">
-        <div class="stat-number">{{ jobs.filter(j => ACTIVE_STATUSES.includes(j.status)).length }}</div>
-        <div class="stat-label">Active</div>
+      <div class="stat-card" :class="{ active: filterStatus==='active' || filterStatus==='' }" @click="toggleTile('active')">
+        <div class="stat-number">{{ filterStatus==='' ? jobs.length : jobs.filter(j => ACTIVE_STATUSES.includes(j.status)).length }}</div>
+        <div class="stat-label">{{ filterStatus==='' ? '✓ Showing all' : 'Active' }}</div>
       </div>
       <div class="stat-card" :class="{ active: filterStatus==='Interested' }" @click="toggleTile('Interested')">
         <div class="stat-number" style="color:var(--muted)">{{ countByStatus('Interested') }}</div>
@@ -609,16 +629,43 @@
         <input type="text" v-model="searchQuery" placeholder="Search company, title, location…" />
       </div>
       <div class="filter-bar">
-        <select class="filter-pill" :class="{ 'is-empty': !filterWorkType }" v-model="filterWorkType">
-          <option value="">Work Type</option>
-          <option v-for="w in workTypes" :key="w">{{ w }}</option>
-        </select>
-        <select class="filter-pill" :class="{ 'is-empty': !filterStage }" v-model="filterStage">
-          <option value="">Stage</option>
-          <option v-for="st in stages" :key="st">{{ st }}</option>
-        </select>
+        <div class="filter-dd-wrap">
+          <button class="chip-toggle" :class="{ on: activeFilterCount > 0 }" @click="showFilterPanel = !showFilterPanel">
+            ⚙ Filters <span v-if="activeFilterCount" class="filter-badge">{{ activeFilterCount }}</span> <span style="opacity:0.6">▾</span>
+          </button>
+          <div class="filter-panel" v-if="showFilterPanel">
+            <div class="filter-grp">
+              <div class="filter-grp-title">Work Type</div>
+              <div class="chip-row">
+                <button v-for="w in workTypes" :key="w" class="opt-chip" :class="{ on: filterWorkTypes.includes(w) }" @click="toggleIn(filterWorkTypes, w)">{{ w }}</button>
+              </div>
+            </div>
+            <div class="filter-grp">
+              <div class="filter-grp-title">Salary band</div>
+              <div class="chip-row">
+                <button v-for="b in SALARY_BANDS" :key="b" class="opt-chip" :class="{ on: filterSalaryBands.includes(b) }" @click="toggleIn(filterSalaryBands, b)">{{ b }}</button>
+              </div>
+            </div>
+            <div class="filter-grp">
+              <div class="filter-grp-title">Company Type</div>
+              <div class="chip-row">
+                <button v-for="st in stages" :key="st" class="opt-chip" :class="{ on: filterCompanyTypes.includes(st) }" @click="toggleIn(filterCompanyTypes, st)">{{ st }}</button>
+              </div>
+            </div>
+            <div class="filter-grp">
+              <div class="filter-grp-title">Referral</div>
+              <div class="chip-row">
+                <button v-for="r in ['Has referral','No referral']" :key="r" class="opt-chip" :class="{ on: filterReferral.includes(r) }" @click="toggleIn(filterReferral, r)">{{ r }}</button>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:4px">
+              <button class="btn btn-ghost btn-sm" @click="filterWorkTypes=[]; filterCompanyTypes=[]; filterSalaryBands=[]; filterReferral=[]">Clear all</button>
+              <button class="btn btn-primary btn-sm" @click="showFilterPanel = false">Done</button>
+            </div>
+          </div>
+        </div>
         <button class="chip-toggle" :class="{ on: filterStarred }" @click="filterStarred = !filterStarred">★ Starred</button>
-        <button v-if="hasActiveFilters" class="chip-clear" @click="clearFilters">✕ Reset</button>
+        <button class="chip-clear" :class="{ disabled: !hasActiveFilters }" :disabled="!hasActiveFilters" @click="clearFilters">✕ Reset</button>
       </div>
     </div>
 
@@ -632,7 +679,7 @@
             <th class="hide-mobile" @click="setSort('location')" :class="{'active-sort': sortKey==='location'}">Location <span class="sort-indicator">{{ sortArrow('location') }}</span></th>
             <th class="hide-mobile" @click="setSort('workType')" :class="{'active-sort': sortKey==='workType'}">Work Type <span class="sort-indicator">{{ sortArrow('workType') }}</span></th>
             <th class="hide-mobile" @click="setSort('salary')" :class="{'active-sort': sortKey==='salary'}">Salary <span class="sort-indicator">{{ sortArrow('salary') }}</span></th>
-            <th class="hide-mobile" @click="setSort('stage')" :class="{'active-sort': sortKey==='stage'}">Stage <span class="sort-indicator">{{ sortArrow('stage') }}</span></th>
+            <th class="hide-mobile" @click="setSort('stage')" :class="{'active-sort': sortKey==='stage'}">Company Type <span class="sort-indicator">{{ sortArrow('stage') }}</span></th>
             <th @click="setSort('status')" :class="{'active-sort': sortKey==='status'}">Status <span class="sort-indicator">{{ sortArrow('status') }}</span></th>
             <th class="hide-mobile" @click="setSort('appliedDate')" :class="{'active-sort': sortKey==='appliedDate'}">Applied <span class="sort-indicator">{{ sortArrow('appliedDate') }}</span></th>
           </tr>
@@ -678,6 +725,35 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile card view (portrait phones) -->
+    <div class="card-list">
+      <div v-if="filteredJobs.length === 0" class="empty-state">
+        <div class="empty-icon">{{ emptyMessage.icon }}</div>
+        <strong>{{ emptyMessage.title }}</strong>
+        <p>{{ emptyMessage.sub }}</p>
+      </div>
+      <div v-for="job in filteredJobs" :key="job.id" class="job-card" :class="{ 'card-accepted': job.status==='Accepted' }" @click="openDetail(job)">
+        <div class="card-top">
+          <span class="star-toggle" :class="{ starred: job.starred }" @click.stop="toggleStar(job)">{{ job.starred ? '★' : '☆' }}</span>
+          <div style="flex:1; min-width:0">
+            <div class="card-title">{{ job.title }}</div>
+            <div class="company-cell">{{ job.company }}</div>
+          </div>
+          <span class="badge" :class="badgeClass(job.status)">{{ job.status }}</span>
+        </div>
+        <div class="card-meta">
+          <span v-if="job.location">📍 {{ job.location }}</span>
+          <span v-if="job.salary">💰 {{ job.salary }}</span>
+          <span v-if="job.workType" class="tag-work-type">{{ job.workType }}</span>
+          <span v-if="job.stage" class="stage-tag">{{ job.stage }}</span>
+        </div>
+        <div class="card-tags" v-if="job.referral || isFollowUpDue(job)">
+          <span v-if="job.referral" class="ref-mini">🤝 Referral</span>
+          <span v-if="isFollowUpDue(job)" class="followup-flag">🔔 Follow up</span>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -727,7 +803,7 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" :class="{ 'needs-fill': justExtracted && !form.salary }" placeholder="$120K–$150K" /></div>
-          <div class="form-group"><label>Company Stage</label>
+          <div class="form-group"><label>Company Type</label>
             <select v-model="form.stage" :class="{ 'needs-fill': justExtracted && !form.stage }">
               <option value="">Unknown</option>
               <option v-for="st in stages" :key="st">{{ st }}</option>
@@ -854,17 +930,6 @@
           <div v-else class="company-snapshot snapshot-loading">Click "Get Insights" for size, stage, market cap, and Glassdoor-style culture notes. Saved for every {{ selectedJob.company }} role.</div>
         </div>
 
-        <!-- Company Notes (shared) -->
-        <div>
-          <div class="detail-section-title sec-head">
-            <span>My Company Notes <span class="shared-tag">shared across {{ selectedJob.company }}</span></span>
-            <button class="collapse-toggle" @click="expanded.companyNotes = !expanded.companyNotes">
-              <span class="collapse-chevron" :class="{ open: expanded.companyNotes }">▸</span>{{ expanded.companyNotes ? 'Hide' : 'Show' }}
-            </button>
-          </div>
-          <textarea v-show="expanded.companyNotes" v-model="companyData.notes" @blur="saveCompanyData" placeholder="What I think of this company, referrals, research…" style="width:100%; min-height:70px"></textarea>
-        </div>
-
         <!-- Notes -->
         <div>
           <div class="detail-section-title">Notes</div>
@@ -976,17 +1041,23 @@
             <span v-if="stageBackfillRunning" class="spinning">⟳</span> 🧹 Clean Up Data
           </button>
         </div>
-        <div class="hint">Clean Up standardizes salaries to $120K–$200K, trims locations to City, ST, and detects any missing company stages.</div>
+        <div class="hint" style="line-height:1.6">
+          <strong>Analytics</strong> — visualize your Hunt: conversion funnel, response/interview/offer rates, salary spread, and breakdowns.<br>
+          <strong>Clean Up Data</strong> — standardizes salaries (e.g. <code>$150K–$200K</code>), trims locations to “City, ST”, and fills in any missing company types.
+        </div>
 
         <!-- Hunt management -->
         <div class="manual-divider">Hunt</div>
         <div class="hunt-current">
-          <div>
-            <div class="hunt-name">🎯 {{ currentHunt ? currentHunt.name : '—' }}</div>
-            <div class="hint" style="margin:2px 0 0" v-if="currentHunt">
-              Started {{ formatDate(new Date(currentHunt.startedAt).toISOString().slice(0,10)) }}
-              <span v-if="currentHunt.endedAt"> · ended {{ formatDate(new Date(currentHunt.endedAt).toISOString().slice(0,10)) }}</span>
-              · {{ jobs.length }} jobs
+          <div style="min-width:0">
+            <div class="hunt-name">🎯 {{ currentHunt ? currentHunt.name : '—' }}
+              <button class="btn btn-ghost btn-sm" @click="renameHunt" style="margin-left:4px">✎</button>
+            </div>
+            <div class="hint" style="margin:4px 0 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap" v-if="currentHunt">
+              <span>Started</span>
+              <input type="date" :value="new Date(currentHunt.startedAt).toISOString().slice(0,10)" @change="setHuntStart($event.target.value)" style="width:auto; padding:3px 6px; font-size:12px" />
+              <span v-if="currentHunt.endedAt">· ended {{ formatDate(new Date(currentHunt.endedAt).toISOString().slice(0,10)) }}</span>
+              <span>· {{ jobs.length }} jobs</span>
             </div>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap">
@@ -1059,7 +1130,7 @@
         </div>
         <div class="hint" style="margin-top:-8px">🔒 Use a <strong>private</strong> repo (e.g. <code>job-hunter-data</code>) so your notes aren't publicly readable.</div>
         <div class="form-group"><label>Token Expiry Date</label><input type="date" v-model="settings.tokenExpiry" @change="persistSettings" /><div class="hint">We'll remind you a week before this date.</div></div>
-        <button class="btn btn-ghost btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo">Test Connection</button>
+        <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo" style="margin-top:4px">Test Connection</button>
 
         <div class="hint" style="text-align:center; margin-top:14px; opacity:0.6">Job Hunter {{ appVersion }} · changes save automatically</div>
       </div>
@@ -1110,6 +1181,34 @@
           <div class="bar-track"><div class="bar-fill" :style="{ width: (stats.byStatus[s] / (stats.maxStatusCount || 1) * 100) + '%', background: statusStyle(s).color }"></div></div>
           <div class="bar-count">{{ stats.byStatus[s] }}</div>
         </div>
+
+        <!-- By Company Type -->
+        <div class="detail-section-title" style="margin-top:18px">By company type</div>
+        <div class="bar-row" v-for="r in byCompanyType.rows" :key="r.label">
+          <div class="bar-label" style="width:118px">{{ r.label }}</div>
+          <div class="bar-track"><div class="bar-fill" :style="{ width: (r.count / byCompanyType.max * 100) + '%', background: 'var(--olive)' }"></div></div>
+          <div class="bar-count">{{ r.count }}</div>
+        </div>
+
+        <!-- Salary distribution (box & whisker) -->
+        <div class="detail-section-title" style="margin-top:18px">Salary distribution <span class="lbl-sub" v-if="salaryBox">· {{ salaryBox.n }} roles with salary</span></div>
+        <div v-if="salaryBox" class="boxplot">
+          <div class="boxplot-track">
+            <div class="boxplot-whisker"></div>
+            <div class="boxplot-box" :style="{ left: salaryBox.pos.q1 + '%', width: (salaryBox.pos.q3 - salaryBox.pos.q1) + '%' }"></div>
+            <div class="boxplot-median" :style="{ left: salaryBox.pos.median + '%' }"></div>
+            <div class="boxplot-cap" style="left:0"></div>
+            <div class="boxplot-cap" style="left:100%"></div>
+          </div>
+          <div class="boxplot-labels">
+            <span>min {{ kfmt(salaryBox.min) }}</span>
+            <span>median {{ kfmt(salaryBox.median) }}</span>
+            <span>max {{ kfmt(salaryBox.max) }}</span>
+          </div>
+          <div class="hint" style="text-align:center">Box = middle 50% ({{ kfmt(salaryBox.q1) }}–{{ kfmt(salaryBox.q3) }}); line = median. Based on the top end of each range.</div>
+        </div>
+        <div v-else class="hint">No salaries recorded yet.</div>
+
         <div v-if="!jobs.length" class="hint" style="text-align:center; margin-top:8px">Add some jobs to see your stats.</div>
       </div>
     </div>
@@ -1155,7 +1254,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v14';
+    const appVersion  = 'v15';
     const jobs        = ref([]);        // active Hunt's jobs (working copy)
     const companies   = reactive({});   // active Hunt's companies, keyed by lowercased name
     const hunts       = reactive({});   // { id: { id, name, startedAt, endedAt, jobs, companies } }
@@ -1168,8 +1267,12 @@ createApp({
     const selectedJob = ref(null);
     const searchQuery = ref('');
     const filterStatus = ref('active');   // 'active' (default) | '' (all) | a specific status
-    const filterWorkType = ref('');
     const filterStarred = ref(false);
+    const filterWorkTypes = ref([]);      // multi-select
+    const filterCompanyTypes = ref([]);   // multi-select (was "stage")
+    const filterSalaryBands = ref([]);    // multi-select
+    const filterReferral = ref([]);       // ['Has referral','No referral']
+    const showFilterPanel = ref(false);
     const ACTIVE_STATUSES = ['Interested','Applied','Interviewing','Offer'];
     const sortKey  = ref('createdAt');   // default order = when the job was added (newest first)
     const sortDir  = ref(-1);
@@ -1192,7 +1295,8 @@ createApp({
     // "Accepted" isn't directly selectable — you reach it via the celebratory "Accept Offer" button
     const dropdownStatuses = ['Interested','Applied','Interviewing','Offer','Rejected'];
     function statusOptions(job) { return job && job.status === 'Accepted' ? statuses : dropdownStatuses; }
-    const stages   = ['Early Startup','Mature Startup','Mid-Size Private','Public Company','Mega-Cap'];
+    const stages   = ['Early Startup','Mature Startup','Late-Stage Private','Public Company','Mega-Cap'];
+    const SALARY_BANDS = ['<$150K','$150–200K','$200–250K','$250–300K','$300K+'];
     const workTypes = ['Remote','Hybrid','In-Office'];
 
     // OpenAI pricing (USD per 1M tokens) + web-search tool fee per call
@@ -1202,7 +1306,6 @@ createApp({
     };
     const WEB_SEARCH_FEE = 0.030;  // ~$30 / 1000 web-search tool calls
 
-    const filterStage = ref('');
     const showSpend = ref(false);
     const statsPeriod = ref('month');
     const apiLog = ref([]);          // [{ts, type, model, inTok, outTok, web, cost}]
@@ -1330,24 +1433,36 @@ createApp({
 
     // One-time seed of usage that happened before v11 added tracking (from the OpenAI dashboard).
     // Fixed ids keep it from double-counting across devices.
+    const SEED_BASE = new Date('2026-05-29T15:00:00').getTime();   // historical usage (pre-tracking), late May
     function seedHistory() {
-      if (apiLog.value.some(e => e.id && e.id.startsWith('seed-'))) return;
-      const now = Date.now(), h = 3600000;
-      const seed = [];
+      if (apiLog.value.some(e => e.id && e.id.startsWith('seed-'))) { migrateSeedDates(); return; }
+      const h = 3600000, seed = [];
       // 9 web-search calls (URL fetches + company insights) + 2 text extracts ≈ $0.26, ~6,101 tokens
       const webTypes = ['URL web search','URL web search','URL web search','URL web search',
                         'Company insights','Company insights','Company insights','Company insights','Company insights'];
-      webTypes.forEach((t, i) => seed.push({ id:'seed-'+i, ts: now - (20 - i)*h, type: t, model:'gpt-4o', inTok: 640, outTok: 280, web: true, cost: 0.0286 }));
-      seed.push({ id:'seed-9',  ts: now - 3*h, type:'Extract from text', model:'gpt-4o-mini', inTok: 360, outTok: 70, web:false, cost: 0.0003 });
-      seed.push({ id:'seed-10', ts: now - 2*h, type:'Extract from text', model:'gpt-4o-mini', inTok: 181, outTok: 50, web:false, cost: 0.0003 });
+      webTypes.forEach((t, i) => seed.push({ id:'seed-'+i, ts: SEED_BASE + i*h, type: t, model:'gpt-4o', inTok: 640, outTok: 280, web: true, cost: 0.0286 }));
+      seed.push({ id:'seed-9',  ts: SEED_BASE + 9*h,  type:'Extract from text', model:'gpt-4o-mini', inTok: 360, outTok: 70, web:false, cost: 0.0003 });
+      seed.push({ id:'seed-10', ts: SEED_BASE + 10*h, type:'Extract from text', model:'gpt-4o-mini', inTok: 181, outTok: 50, web:false, cost: 0.0003 });
       apiLog.value.push(...seed);
       apiLog.value.sort((a,b)=> (a.ts||0)-(b.ts||0));
       saveData();
     }
+    // Re-date already-seeded entries that were stamped "recent" (they polluted Today) to the historical base
+    function migrateSeedDates() {
+      let changed = false;
+      apiLog.value.forEach(e => {
+        if (e.id && e.id.startsWith('seed-') && e.ts > Date.now() - 3*86400000) {
+          const i = parseInt(e.id.replace('seed-',''), 10) || 0;
+          e.ts = SEED_BASE + i*3600000; changed = true;
+        }
+      });
+      if (changed) { apiLog.value.sort((a,b)=>(a.ts||0)-(b.ts||0)); saveData(); }
+    }
 
     // ── Filters ──
     function clearFilters() {
-      searchQuery.value=''; filterStatus.value='active'; filterWorkType.value=''; filterStage.value='';
+      searchQuery.value=''; filterStatus.value='active';
+      filterWorkTypes.value=[]; filterCompanyTypes.value=[]; filterSalaryBands.value=[]; filterReferral.value=[];
       filterStarred.value=false; sortKey.value='createdAt'; sortDir.value=-1;
     }
     // Tiles: clicking the current tile toggles back to default; Active toggles to "all"
@@ -1360,7 +1475,12 @@ createApp({
     async function classifyStage(company) {
       const prompt = `Classify the company "${company}" into EXACTLY one of these labels and reply with ONLY the label text:
 ${stages.join(' | ')}
-Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mid-Size Private = large private / pre-IPO; Public Company = publicly traded; Mega-Cap = very large public (>$100B).`;
+Guide (judge by funding stage AND scale/valuation):
+- Early Startup = seed / Series A, small.
+- Mature Startup = Series B–D, scaling, valuation under ~$5B.
+- Late-Stage Private = large private / pre-IPO; ANY private company valued over ~$5B goes here regardless of how "startup-like" it feels (e.g., Anthropic, OpenAI, Stripe, Databricks, SpaceX).
+- Public Company = publicly traded, under ~$100B market cap.
+- Mega-Cap = publicly traded, over ~$100B market cap.`;
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method:'POST',
         headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${settings.openaiKey}` },
@@ -1429,6 +1549,7 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
         if (j.status === 'Watching') j.status = 'Interested';
         if (!j.createdAt) j.createdAt = Date.now() - (n - i) * 1000; // earlier rows = older
         if (j.status === 'Interested') j.appliedDate = '';            // Interested has no applied date
+        if (j.stage === 'Mid-Size Private') j.stage = 'Late-Stage Private';
         delete j.dream;                                               // Dream removed
         if (j.notes === undefined) {                                  // merge Role Notes + Questions → Notes
           j.notes = [j.roleNotes, j.questions].filter(Boolean).join('\n\n');
@@ -1529,17 +1650,53 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
       ] };
     });
 
+    function kfmt(v) { if (!v) return '—'; return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : '$' + Math.round(v/1000) + 'K'; }
+
+    // Applications by Company Type
+    const byCompanyType = computed(() => {
+      const counts = {}; stages.forEach(s => counts[s] = 0);
+      let unknown = 0;
+      jobs.value.forEach(j => { if (j.stage && counts[j.stage] !== undefined) counts[j.stage]++; else unknown++; });
+      const rows = stages.map(s => ({ label: s, count: counts[s] }));
+      if (unknown) rows.push({ label: 'Unknown', count: unknown });
+      const max = Math.max(1, ...rows.map(r => r.count));
+      return { rows, max };
+    });
+
+    // Salary distribution (box & whisker), using each job's top-end salary
+    const salaryBox = computed(() => {
+      const vals = jobs.value.map(j => salaryValue(j.salary)).filter(v => v > 0).sort((a,b)=>a-b);
+      if (!vals.length) return null;
+      const q = (p) => { const idx = (vals.length-1)*p, lo = Math.floor(idx), hi = Math.ceil(idx); return vals[lo] + (vals[hi]-vals[lo])*(idx-lo); };
+      const min = vals[0], max = vals[vals.length-1], span = Math.max(1, max-min);
+      const pct = (v) => (v-min)/span*100;
+      const s = { min, q1: q(0.25), median: q(0.5), q3: q(0.75), max, n: vals.length };
+      return { ...s, pos: { q1: pct(s.q1), median: pct(s.median), q3: pct(s.q3) } };
+    });
+
     // Spend summary
     const spend = computed(() => {
       const now = Date.now(), day = 86400000;
+      const midnight = new Date(); midnight.setHours(0,0,0,0);   // local calendar "today"
       const sum = (since) => apiLog.value.filter(e => e.ts >= since).reduce((a,e)=>a+e.cost,0);
       const byType = {};
       apiLog.value.forEach(e => { (byType[e.type] = byType[e.type] || { count:0, cost:0 }).count++; byType[e.type].cost += e.cost; });
-      return { daily: sum(now-day), weekly: sum(now-7*day), monthly: sum(now-30*day),
+      return { daily: sum(midnight.getTime()), weekly: sum(now-7*day), monthly: sum(now-30*day),
         all: apiLog.value.reduce((a,e)=>a+e.cost,0), count: apiLog.value.length, byType };
     });
 
-    const hasActiveFilters = computed(() => !!(searchQuery.value || filterWorkType.value || filterStage.value || filterStarred.value) || filterStatus.value !== 'active' || sortKey.value !== 'createdAt' || sortDir.value !== -1);
+    function salaryBand(s) {
+      const v = salaryValue(s);
+      if (!v) return '';
+      if (v < 150000) return '<$150K';
+      if (v < 200000) return '$150–200K';
+      if (v < 250000) return '$200–250K';
+      if (v < 300000) return '$250–300K';
+      return '$300K+';
+    }
+    function toggleIn(arr, val) { const i = arr.indexOf(val); if (i >= 0) arr.splice(i,1); else arr.push(val); }
+    const activeFilterCount = computed(() => filterWorkTypes.value.length + filterCompanyTypes.value.length + filterSalaryBands.value.length + filterReferral.value.length);
+    const hasActiveFilters = computed(() => activeFilterCount.value > 0 || searchQuery.value || filterStarred.value || filterStatus.value !== 'active' || sortKey.value !== 'createdAt' || sortDir.value !== -1);
 
     const emptyMessage = computed(() => {
       if (!jobs.value.length) return { icon:'🎯', title:'No jobs yet', sub:'Add your first job to start this Hunt.' };
@@ -1584,10 +1741,12 @@ Guide: Early Startup = seed/Series A; Mature Startup = Series B–D, scaling; Mi
         const matchS = !filterStatus.value ? true
           : filterStatus.value === 'active' ? ACTIVE_STATUSES.includes(j.status)
           : j.status === filterStatus.value;
-        const matchW = !filterWorkType.value || j.workType === filterWorkType.value;
-        const matchStage = !filterStage.value || j.stage === filterStage.value;
+        const matchW = !filterWorkTypes.value.length || filterWorkTypes.value.includes(j.workType);
+        const matchType = !filterCompanyTypes.value.length || filterCompanyTypes.value.includes(j.stage);
+        const matchSalary = !filterSalaryBands.value.length || filterSalaryBands.value.includes(salaryBand(j.salary));
+        const matchRef = !filterReferral.value.length || filterReferral.value.includes(j.referral ? 'Has referral' : 'No referral');
         const matchStar = !filterStarred.value || j.starred;
-        return matchQ && matchS && matchW && matchStage && matchStar;
+        return matchQ && matchS && matchW && matchType && matchSalary && matchRef && matchStar;
       });
       return [...list].sort((a,b) => {
         // Accepted (you got the job!) always sticks to the top
@@ -2026,6 +2185,15 @@ If unsure on a point, say so briefly.`;
       clearFilters(); selectedJob.value = null;
       saveData(); showToast('🎯 New Hunt started — good luck!');
     }
+    function renameHunt() {
+      const h = hunts[activeHuntId.value]; if (!h) return;
+      const name = prompt('Rename this Hunt:', h.name);
+      if (name && name.trim()) { h.name = name.trim(); saveData(); }
+    }
+    function setHuntStart(dateStr) {
+      const h = hunts[activeHuntId.value]; if (!h || !dateStr) return;
+      h.startedAt = new Date(dateStr + 'T12:00:00').getTime(); saveData();
+    }
     function switchHunt(id) {
       if (id === activeHuntId.value) return;
       syncActiveIntoHunts();
@@ -2118,9 +2286,9 @@ If unsure on a point, say so briefly.`;
       try {
         syncState.value = 'busy';
         const res = await fetch(`https://api.github.com/repos/${settings.githubUser}/${settings.githubRepo}`, { headers:{ 'Authorization':`Bearer ${settings.githubToken}` } });
-        if (res.ok) { syncState.value = 'ok'; showToast('✅ GitHub connected successfully!'); }
-        else throw new Error('Status ' + res.status + ' — check token scope (needs repo), username, and repo name');
-      } catch(e) { syncState.value = 'error'; showToast('⚠️ Connection failed: ' + e.message, 5000); }
+        if (res.ok) { syncState.value = 'ok'; showToast('✅ Connected — sync is working'); }
+        else throw new Error('Status ' + res.status + ' — check your token (needs repo scope), username, and repo name');
+      } catch(e) { syncState.value = 'error'; showToast('⚠️ Couldn’t connect: ' + e.message, 5000); }
     }
 
     // ── PWA badge ──
@@ -2185,14 +2353,15 @@ If unsure on a point, say so briefly.`;
     });
 
     return {
-      appVersion, jobs, companies, statuses, stages, workTypes, showAddModal, showSettings, showInterviewModal, showContactModal, showStats, showSpend, stats, spend, overTime, statsPeriod, money, funnel,
-      selectedJob, searchQuery, filterStatus, filterWorkType, filterStage, filterStarred, sortKey, sortDir, filteredJobs, hasActiveFilters, emptyMessage, ACTIVE_STATUSES,
+      appVersion, jobs, companies, statuses, stages, workTypes, showAddModal, showSettings, showInterviewModal, showContactModal, showStats, showSpend, stats, spend, overTime, statsPeriod, money, funnel, byCompanyType, salaryBox, kfmt,
+      selectedJob, searchQuery, filterStatus, filterStarred, filterWorkTypes, filterCompanyTypes, filterSalaryBands, filterReferral, SALARY_BANDS, showFilterPanel, activeFilterCount, toggleIn,
+      sortKey, sortDir, filteredJobs, hasActiveFilters, emptyMessage, ACTIVE_STATUSES,
       aiInput, aiLoading, snapshotLoading, summaryLoading, syncState, toast, toastAction, runToastAction, settings, lastSyncText,
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus, dropdownStatuses, statusOptions,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
       clearFilters, toggleTile, cleanUpData, stageBackfillRunning, manualSync, canUndo, undo, redo,
-      currentHunt, huntList, activeHuntId, startNewHunt, switchHunt, endHunt, deleteHunt, exportCsv,
+      currentHunt, huntList, activeHuntId, startNewHunt, switchHunt, endHunt, deleteHunt, exportCsv, renameHunt, setHuntStart,
       editingJobId, editingContactIdx, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob, acceptOffer,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, openEditContact, saveContact, deleteContact, saveCompanyData, generateSummary,

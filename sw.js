@@ -1,9 +1,11 @@
 // Job Hunter service worker — offline shell caching
-const CACHE = 'job-hunter-v14';
+const CACHE = 'job-hunter-v15';
 const ASSETS = [
   './',
   './index.html',
   './appicon.png',
+  './header.png',
+  './crosshairs.png',
   './manifest.json',
   'https://unpkg.com/vue@3/dist/vue.global.js'
 ];
