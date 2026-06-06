@@ -54,9 +54,9 @@
       padding: 14px 20px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .logo { display: flex; align-items: center; gap: 7px; }
-    .logo-img { width: 42px; height: 42px; filter: drop-shadow(0 0 7px rgba(245,121,46,0.7)) drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
-    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 1px 5px rgba(0,0,0,0.85); }
+    .logo { display: flex; align-items: center; gap: 0; }
+    .logo-img { width: 48px; height: 48px; filter: drop-shadow(0 0 7px rgba(245,121,46,0.7)) drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 1px 5px rgba(0,0,0,0.85); margin-left: -7px; }
     .logo-text span { color: var(--accent); }
 
     .header-actions { display: flex; gap: 8px; align-items: center; }
@@ -219,7 +219,9 @@
       font-size: 13px; font-family: inherit; min-width: 0;
     }
     /* Keep native date UI (shows mm/dd/yyyy) but don't let it overflow its column */
-    input[type="date"] { min-width: 0; min-height: 38px; }
+    /* Strip iOS's hard intrinsic min-width so date fields shrink to their container (kills overflow) */
+    input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; min-height: 38px; box-sizing: border-box; }
+    input[type="date"]::-webkit-date-and-time-value { text-align: left; }
     textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     .ai-paste-area { min-height: 110px; }
     .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
@@ -482,6 +484,8 @@
     .funnel-bar { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #1a1206; font-weight: 800; font-size: 13px; padding: 7px 10px; border-radius: 8px; min-width: 28px; text-align: right; transition: width 0.3s; }
     .funnel-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 3px; }
     .funnel-pct { color: var(--green); font-weight: 700; }
+    .stalled-callout { background: rgba(214,177,58,0.12); border: 1px solid var(--yellow); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #e7c558; margin-top: 12px; line-height: 1.5; }
+    .stalled-callout strong { color: #fff; }
 
     /* Undo FAB + toast action */
     .undo-fab { position: fixed; left: 16px; bottom: 18px; z-index: 998; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 20px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow); }
@@ -511,15 +515,26 @@
     .row-accepted .company-name::after { content: ' 🎉'; }
 
     /* Hunt management in settings */
-    .hunt-current { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; flex-wrap: wrap; }
-    .hunt-name { font-weight: 700; font-size: 14px; }
-    .hunt-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; font-size: 13px; }
+    .hunt-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .hunt-card-top { display: flex; align-items: center; gap: 12px; }
+    .hunt-icon { width: 40px; height: 40px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(245,121,46,0.6)); }
+    .hunt-name { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .hunt-stats { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .ended-badge { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 2px 7px; border-radius: 10px; }
+    .hunt-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .hunt-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .hunt-row { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; font-size: 13px; }
     .hunt-row.active { border-color: var(--accent); background: rgba(245,121,46,0.08); }
 
     /* Combined Filters dropdown */
     .filter-dd-wrap { position: relative; }
     .filter-badge { background: var(--accent); color: #1a1206; border-radius: 10px; padding: 0 6px; font-size: 11px; font-weight: 700; }
     .filter-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 50; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; width: 290px; max-width: 92vw; display: flex; flex-direction: column; gap: 12px; }
+    /* On wide screens the Filters button sits to the right, so open the panel leftward to stay on-screen */
+    @media (min-width: 641px) { .filter-panel { left: auto; right: 0; } }
+    /* Sort pill only on mobile (desktop sorts via table headers) */
+    .sort-only-mobile { display: none; }
+    @media (max-width: 640px) { .sort-only-mobile { display: block; } }
     .filter-grp-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
     .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
     .opt-chip { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 16px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
@@ -537,6 +552,9 @@
     .card-top .badge { flex-shrink: 0; }
     .card-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); align-items: center; }
     .card-pills { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+    /* uniform pill size in cards */
+    .card-pills > span { font-size: 11px; padding: 3px 9px; border-radius: 20px; margin-top: 0; line-height: 1.4; }
+    .card-top .inline-status { flex-shrink: 0; }
     .card-accepted { border-color: var(--green); box-shadow: inset 3px 0 0 var(--green), 0 1px 3px rgba(0,0,0,0.25); }
     @media (max-width: 640px) {
       .table-wrap { display: none; }
@@ -629,6 +647,15 @@
         <input type="text" v-model="searchQuery" placeholder="Search company, title, location…" />
       </div>
       <div class="filter-bar">
+        <div class="filter-dd-wrap sort-only-mobile">
+          <button class="chip-toggle" :class="{ on: sortKey !== 'createdAt' }" @click="showSortPanel = !showSortPanel">
+            Sort <span style="opacity:0.6">▾</span>
+          </button>
+          <div class="filter-panel" v-if="showSortPanel" style="width:220px; gap:6px">
+            <div class="filter-grp-title">Sort by</div>
+            <button v-for="o in SORT_OPTIONS" :key="o.label" class="opt-chip" :class="{ on: sortKey===o.key && sortDir===o.dir }" @click="applySort(o)" style="text-align:left; width:100%">{{ o.label }}</button>
+          </div>
+        </div>
         <div class="filter-dd-wrap">
           <button class="chip-toggle" :class="{ on: activeFilterCount > 0 }" @click="showFilterPanel = !showFilterPanel">
             Filters <span v-if="activeFilterCount" class="filter-badge">{{ activeFilterCount }}</span> <span style="opacity:0.6">▾</span>
@@ -741,7 +768,9 @@
             <div class="card-title">{{ job.title }}</div>
             <div class="company-cell">{{ job.company }}</div>
           </div>
-          <span class="badge" :class="badgeClass(job.status)">{{ job.status }}</span>
+          <select class="inline-status" :style="statusStyle(job.status)" v-model="job.status" @change="onInlineStatus(job)" @click.stop>
+            <option v-for="s in statusOptions(job)" :key="s">{{ s }}</option>
+          </select>
         </div>
         <div class="card-meta" v-if="job.location || job.salary">
           <span v-if="job.location">📍 {{ job.location }}</span>
@@ -802,7 +831,7 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" :class="{ 'needs-fill': justExtracted && !form.salary }" placeholder="$120K–$150K" /></div>
+          <div class="form-group"><label>Salary / Range</label><input type="text" v-model="form.salary" @blur="form.salary = normalizeSalary(form.salary)" :class="{ 'needs-fill': justExtracted && !form.salary }" placeholder="$120K–$150K" /></div>
           <div class="form-group"><label>Company Type</label>
             <select v-model="form.stage" :class="{ 'needs-fill': justExtracted && !form.stage }">
               <option value="">Unknown</option>
@@ -812,7 +841,7 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Status *</label>
-            <select v-model="form.status" :class="{ 'needs-fill': justExtracted && !form.status }">
+            <select v-model="form.status" @change="onFormStatus" :class="{ 'needs-fill': justExtracted && !form.status }">
               <option value="" disabled>Select…</option>
               <option v-for="s in dropdownStatuses" :key="s">{{ s }}</option>
             </select>
@@ -1035,7 +1064,7 @@
       <div class="modal-body">
 
         <!-- Quick actions -->
-        <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center">
           <button class="btn btn-primary" @click="showStats = true">📊 Analytics</button>
           <button class="btn btn-secondary" @click="cleanUpData" :disabled="stageBackfillRunning">
             <span v-if="stageBackfillRunning" class="spinning">⟳</span> 🧹 Clean Up Data
@@ -1048,29 +1077,34 @@
 
         <!-- Hunt management -->
         <div class="manual-divider">Hunt</div>
-        <div class="hunt-current">
-          <div style="min-width:0">
-            <div class="hunt-name">🎯 {{ currentHunt ? currentHunt.name : '—' }}
-              <button class="btn btn-ghost btn-sm" @click="renameHunt" style="margin-left:4px">✎</button>
-            </div>
-            <div class="hint" style="margin:4px 0 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap" v-if="currentHunt">
-              <span>Started</span>
-              <input type="date" :value="new Date(currentHunt.startedAt).toISOString().slice(0,10)" @change="setHuntStart($event.target.value)" style="width:auto; padding:3px 6px; font-size:12px" />
-              <span v-if="currentHunt.endedAt">· ended {{ formatDate(new Date(currentHunt.endedAt).toISOString().slice(0,10)) }}</span>
-              <span>· {{ jobs.length }} jobs</span>
+        <div class="hunt-card">
+          <div class="hunt-card-top">
+            <img src="crosshairs.png" class="hunt-icon" alt="" />
+            <div style="flex:1; min-width:0">
+              <div class="hunt-name">
+                {{ currentHunt ? currentHunt.name : '—' }}
+                <button class="btn btn-ghost btn-sm" @click="renameHunt" title="Rename">✎</button>
+                <span v-if="currentHunt && currentHunt.endedAt" class="ended-badge">ended</span>
+              </div>
+              <div class="hunt-stats">{{ jobs.length }} jobs · {{ countByStatus('Interviewing') + countByStatus('Offer') + countByStatus('Accepted') }} interviewing+ · {{ countByStatus('Offer') + countByStatus('Accepted') }} offers</div>
             </div>
           </div>
-          <div style="display:flex; gap:6px; flex-wrap:wrap">
+          <div class="hunt-meta" v-if="currentHunt">
+            <span class="hint" style="margin:0">Started</span>
+            <input type="date" :value="new Date(currentHunt.startedAt).toISOString().slice(0,10)" @change="setHuntStart($event.target.value)" style="width:auto; padding:4px 8px; font-size:12px" />
+            <span v-if="currentHunt.endedAt" class="hint" style="margin:0">· ended {{ formatDate(new Date(currentHunt.endedAt).toISOString().slice(0,10)) }}</span>
+          </div>
+          <div class="hunt-actions">
             <button class="btn btn-secondary btn-sm" @click="exportCsv">⬇ CSV</button>
             <button class="btn btn-secondary btn-sm" v-if="currentHunt && !currentHunt.endedAt" @click="endHunt">🏁 End Hunt</button>
             <button class="btn btn-primary btn-sm" @click="startNewHunt">+ New Hunt</button>
           </div>
         </div>
-        <div v-if="huntList.length > 1" style="margin-top:8px">
-          <div class="hint" style="margin-bottom:4px">Switch Hunt</div>
+        <div v-if="huntList.length > 1" style="margin-top:10px">
+          <div class="filter-grp-title">Switch Hunt</div>
           <div v-for="h in huntList" :key="h.id" class="hunt-row" :class="{ active: h.id === activeHuntId }">
-            <span @click="switchHunt(h.id)" style="cursor:pointer; flex:1">
-              {{ h.name }} <span class="hint" style="margin:0">· {{ (h.jobs||[]).length }} jobs{{ h.endedAt ? ' · ended' : '' }}</span>
+            <span @click="switchHunt(h.id)" style="cursor:pointer; flex:1; min-width:0">
+              <strong>{{ h.name }}</strong> <span class="hint" style="margin:0">· {{ (h.jobs||[]).length }} jobs{{ h.endedAt ? ' · ended' : '' }}</span>
             </span>
             <button class="btn btn-ghost btn-sm" @click="deleteHunt(h.id)" title="Delete Hunt">🗑</button>
           </div>
@@ -1102,7 +1136,7 @@
 
         <!-- Backup -->
         <div class="manual-divider">Backup</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center">
           <button class="btn btn-secondary btn-sm" @click="exportJson">⬇ Export</button>
           <button class="btn btn-secondary btn-sm" @click="triggerImport">⬆ Restore</button>
           <input ref="importInput" type="file" accept="application/json,.json" @change="importJson" style="display:none" />
@@ -1130,7 +1164,7 @@
         </div>
         <div class="hint" style="margin-top:-8px">🔒 Use a <strong>private</strong> repo (e.g. <code>job-hunter-data</code>) so your notes aren't publicly readable.</div>
         <div class="form-group"><label>Token Expiry Date</label><input type="date" v-model="settings.tokenExpiry" @change="persistSettings" /><div class="hint">We'll remind you a week before this date.</div></div>
-        <button class="btn btn-secondary btn-sm" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo" style="margin-top:4px">Test Connection</button>
+        <button class="btn btn-secondary" @click="testGithub" :disabled="!settings.githubToken || !settings.githubUser || !settings.githubRepo" style="width:100%; justify-content:center; margin-top:8px">🔌 Test Connection</button>
 
         <div class="hint" style="text-align:center; margin-top:14px; opacity:0.6">Job Hunter {{ appVersion }} · changes save automatically</div>
       </div>
@@ -1160,6 +1194,24 @@
           </div>
         </div>
 
+        <!-- Stalled callout -->
+        <div v-if="responseTime.stalled" class="stalled-callout">
+          ⏳ <strong>{{ responseTime.stalled }}</strong> application{{ responseTime.stalled>1?'s':'' }} stalled <strong>15+ days</strong> with no response — time to follow up.
+        </div>
+
+        <!-- Time to first response -->
+        <div class="detail-section-title" style="margin-top:18px">Time to first response</div>
+        <div class="bar-row" v-for="b in responseTime.buckets" :key="b.label">
+          <div class="bar-label">{{ b.label }}</div>
+          <div class="bar-track"><div class="bar-fill" :style="{ width: (b.n / responseTime.max * 100) + '%', background: 'var(--green)' }"></div></div>
+          <div class="bar-count">{{ b.n }}</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label" style="color:var(--muted)">No reply yet</div>
+          <div class="bar-track"><div class="bar-fill" :style="{ width: (responseTime.noReply / responseTime.max * 100) + '%', background: 'var(--border)' }"></div></div>
+          <div class="bar-count">{{ responseTime.noReply }}</div>
+        </div>
+
         <div class="sec-head" style="margin-top:18px; margin-bottom:8px">
           <div class="detail-section-title" style="margin:0">Applications over time</div>
           <div class="period-toggle">
@@ -1183,7 +1235,7 @@
         </div>
 
         <!-- By Company Type -->
-        <div class="detail-section-title" style="margin-top:18px">By company type</div>
+        <div class="detail-section-title" style="margin-top:18px">Breakdown by company type</div>
         <div class="bar-row" v-for="r in byCompanyType.rows" :key="r.label">
           <div class="bar-label" style="width:118px">{{ r.label }}</div>
           <div class="bar-track"><div class="bar-fill" :style="{ width: (r.count / byCompanyType.max * 100) + '%', background: 'var(--olive)' }"></div></div>
@@ -1235,7 +1287,7 @@ const { createApp, ref, computed, reactive, onMounted } = Vue;
 createApp({
   setup() {
     // ── State ──
-    const appVersion  = 'v16';
+    const appVersion  = 'v17';
     const jobs        = ref([]);        // active Hunt's jobs (working copy)
     const companies   = reactive({});   // active Hunt's companies, keyed by lowercased name
     const hunts       = reactive({});   // { id: { id, name, startedAt, endedAt, jobs, companies } }
@@ -1254,6 +1306,15 @@ createApp({
     const filterSalaryBands = ref([]);    // multi-select
     const filterReferral = ref([]);       // ['Has referral','No referral']
     const showFilterPanel = ref(false);
+    const showSortPanel = ref(false);
+    const SORT_OPTIONS = [
+      { label: 'Newest added',          key: 'createdAt',   dir: -1 },
+      { label: 'Company A–Z',           key: 'company',     dir: 1 },
+      { label: 'Job title A–Z',         key: 'title',       dir: 1 },
+      { label: 'Salary (high → low)',   key: 'salary',      dir: -1 },
+      { label: 'Date applied (newest)', key: 'appliedDate', dir: -1 },
+      { label: 'Status',                key: 'status',      dir: 1 }
+    ];
     const ACTIVE_STATUSES = ['Interested','Applied','Interviewing','Offer'];
     const sortKey  = ref('createdAt');   // default order = when the job was added (newest first)
     const sortDir  = ref(-1);
@@ -1446,6 +1507,7 @@ createApp({
       filterWorkTypes.value=[]; filterCompanyTypes.value=[]; filterSalaryBands.value=[]; filterReferral.value=[];
       filterStarred.value=false; sortKey.value='createdAt'; sortDir.value=-1;
     }
+    function applySort(o) { sortKey.value = o.key; sortDir.value = o.dir; showSortPanel.value = false; }
     // Tiles: clicking the current tile toggles back to default; Active toggles to "all"
     function toggleTile(key) {
       if (key === 'active') filterStatus.value = (filterStatus.value === 'active') ? '' : 'active';
@@ -1575,7 +1637,7 @@ Guide (judge by funding stage AND scale/valuation):
       const spans = [];
       submitted.forEach(j => {
         if (!j.appliedDate || !Array.isArray(j.activity)) return;
-        const hit = j.activity.find(a => /Status → (Interviewing|Offer|Accepted|Rejected)/.test(a.text));
+        const hit = j.activity.find(a => /Moved to (Interviewing|Offer|Accepted|Rejected)/.test(a.text));
         if (hit && hit.date) {
           const d = (new Date(hit.date) - new Date(j.appliedDate)) / 86400000;
           if (d >= 0) spans.push(d);
@@ -1640,6 +1702,31 @@ Guide (judge by funding stage AND scale/valuation):
       if (unknown) rows.push({ label: 'Unknown', count: unknown });
       const max = Math.max(1, ...rows.map(r => r.count));
       return { rows, max };
+    });
+
+    // Time from Applied → first response (histogram) + stalled count
+    const responseTime = computed(() => {
+      const buckets = [
+        { label: '< 3 days', lt: 3, n: 0 },
+        { label: '3–7 days', lt: 8, n: 0 },
+        { label: '1–2 weeks', lt: 15, n: 0 },
+        { label: '2–4 weeks', lt: 29, n: 0 },
+        { label: '> 4 weeks', lt: Infinity, n: 0 }
+      ];
+      let noReply = 0, stalled = 0;
+      jobs.value.forEach(j => {
+        if (j.status === 'Interested' || !j.appliedDate) return;  // not yet submitted
+        const hit = (j.activity || []).find(a => /Moved to (Interviewing|Offer|Accepted|Rejected)/.test(a.text));
+        if (hit && hit.date) {
+          const d = (new Date(hit.date + 'T12:00:00') - new Date(j.appliedDate + 'T12:00:00')) / 86400000;
+          if (d >= 0) (buckets.find(b => d < b.lt) || buckets[buckets.length-1]).n++;
+        } else if (j.status === 'Applied') {
+          noReply++;
+          if ((Date.now() - new Date(j.appliedDate + 'T12:00:00')) / 86400000 >= 15) stalled++;
+        }
+      });
+      const max = Math.max(1, ...buckets.map(b => b.n), noReply);
+      return { buckets, noReply, stalled, max };
     });
 
     // Spend summary
@@ -1727,6 +1814,10 @@ Guide (judge by funding stage AND scale/valuation):
     });
 
     // ── Add / Edit / Save Job ──
+    function onFormStatus() {
+      if (form.status === 'Interested') form.appliedDate = '';
+      else if (!form.appliedDate) form.appliedDate = today();
+    }
     function openAddModal() {
       Object.assign(form, { company:'', title:'', location:'', workType:'', salary:'', status:'', url:'', appliedDate:'', notes:'', referral: false, referrer: '', stage:'', summary:'' });
       editingJobId.value = null; justExtracted.value = false;
@@ -2332,16 +2423,16 @@ If unsure on a point, say so briefly.`;
     });
 
     return {
-      appVersion, jobs, companies, statuses, stages, workTypes, showAddModal, showSettings, showInterviewModal, showContactModal, showStats, showSpend, stats, spend, overTime, statsPeriod, money, funnel, byCompanyType,
+      appVersion, jobs, companies, statuses, stages, workTypes, showAddModal, showSettings, showInterviewModal, showContactModal, showStats, showSpend, stats, spend, overTime, statsPeriod, money, funnel, byCompanyType, responseTime,
       selectedJob, searchQuery, filterStatus, filterStarred, filterWorkTypes, filterCompanyTypes, filterSalaryBands, filterReferral, SALARY_BANDS, showFilterPanel, activeFilterCount, toggleIn,
-      sortKey, sortDir, filteredJobs, hasActiveFilters, emptyMessage, ACTIVE_STATUSES,
+      sortKey, sortDir, filteredJobs, hasActiveFilters, emptyMessage, ACTIVE_STATUSES, showSortPanel, SORT_OPTIONS, applySort,
       aiInput, aiLoading, snapshotLoading, summaryLoading, syncState, toast, toastAction, runToastAction, settings, lastSyncText,
       form, interviewForm, contactForm, companyData, followUpsDue, tokenExpiringSoon, dismissedExpiry,
       showKeys, expanded, statusStyle, mdToHtml, persistSettings, onInlineStatus, dropdownStatuses, statusOptions,
       formatDate, badgeClass, countByStatus, isFollowUpDue, setSort, sortArrow,
       clearFilters, toggleTile, cleanUpData, stageBackfillRunning, manualSync, canUndo, undo, redo,
       currentHunt, huntList, activeHuntId, startNewHunt, switchHunt, endHunt, deleteHunt, exportCsv, renameHunt, setHuntStart,
-      editingJobId, editingContactIdx, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob, acceptOffer,
+      editingJobId, editingContactIdx, justExtracted, openAddModal, openEditModal, saveJob, openDetail, toggleStar, toggleReferral, deleteActivity, updateJobStatus, deleteJob, acceptOffer, onFormStatus, normalizeSalary,
       openAddInterview, saveInterview, deleteInterview,
       openAddContact, openEditContact, saveContact, deleteContact, saveCompanyData, generateSummary,
       autofill, fetchSnapshot, formProfileLoading, formCompanyProfile, genFormProfile, exportJson, importInput, triggerImport, importJson,
